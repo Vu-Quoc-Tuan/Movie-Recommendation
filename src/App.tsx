@@ -81,11 +81,10 @@ function AppContent() {
                 <button
                   key={tab.id}
                   onClick={() => handleTabClick(tab.id, tab.protected || false)}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
-                    activeTab === tab.id
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                  }`}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${activeTab === tab.id
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
                 >
                   <Icon className="w-4 h-4" />
                   <span className="text-sm">{tab.label}</span>
@@ -114,15 +113,29 @@ function AppContent() {
 }
 
 function ThemeToggle() {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
-    const isDarkMode = document.documentElement.classList.contains('dark');
-    setIsDark(isDarkMode);
+    // Nếu người dùng chưa từng đổi theme, set dark là mặc định
+    if (!localStorage.getItem('theme')) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        setIsDark(true);
+      } else {
+        document.documentElement.classList.remove('dark');
+        setIsDark(false);
+      }
+    }
   }, []);
 
   const toggleTheme = () => {
+    const newTheme = isDark ? 'light' : 'dark';
     document.documentElement.classList.toggle('dark');
+    localStorage.setItem('theme', newTheme);
     setIsDark(!isDark);
   };
 
@@ -133,9 +146,9 @@ function ThemeToggle() {
       aria-label="Toggle theme"
     >
       {isDark ? (
-        <Sun className="w-5 h-5 text-yellow-500" />
+        <Moon className="w-5 h-5 text-white" />
       ) : (
-        <Moon className="w-5 h-5 text-gray-700" />
+        <Sun className="w-5 h-5 text-yellow-500" />
       )}
     </button>
   );
