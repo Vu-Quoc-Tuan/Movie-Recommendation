@@ -94,7 +94,7 @@ export function MovieDetail({ movie, onClose }: MovieDetailProps) {
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="sticky top-4 right-4 float-right p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors z-10"
+          className="sticky top-4 right-4 float-right p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors z-10 cursor-pointer"
         >
           <X className="w-6 h-6 text-white" />
         </button>
@@ -110,7 +110,7 @@ export function MovieDetail({ movie, onClose }: MovieDetailProps) {
         </div>
 
         {/* Content */}
-        <div className="p-8 -mt-32 relative z-10">
+        <div className="p-8 -mt-32 relative z-9">
           <div className="flex items-start justify-between mb-6">
             <div>
               <h1 className="text-4xl mb-2">{movie.title}</h1>
@@ -130,11 +130,10 @@ export function MovieDetail({ movie, onClose }: MovieDetailProps) {
             <div className="flex space-x-2">
               <button
                 onClick={handleSave}
-                className={`p-3 rounded-lg transition-all ${
-                  saved
-                    ? 'bg-purple-500 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
+                className={`p-3 rounded-lg transition-all ${saved
+                  ? 'bg-purple-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
               >
                 <Bookmark className={`w-5 h-5 ${saved ? 'fill-current' : ''}`} />
               </button>
