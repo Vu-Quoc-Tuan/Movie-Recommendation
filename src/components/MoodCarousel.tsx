@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getMoodPicks, Movie } from '../utils/movieData';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { MovieDetail } from './MovieDetail';
 
 export function MoodCarousel() {
   const [movies, setMovies] = useState<Movie[]>([]);
+  const [showDetail, setShowDetail] = useState(false);
+  const [movie, setMovie] = useState<Movie>()
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -40,6 +43,10 @@ export function MoodCarousel() {
           {movies.map((movie) => (
             <div
               key={movie.id}
+              onClick={() => {
+                setShowDetail(true)
+                setMovie(movie)
+              }}
               className="min-w-[calc(100%-1rem)] sm:min-w-[calc(50%-0.5rem)] md:min-w-[calc(33.333%-0.667rem)] lg:min-w-[calc(25%-0.75rem)]"
             >
               <div className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all group cursor-pointer">
@@ -74,6 +81,8 @@ export function MoodCarousel() {
           ))}
         </div>
       </div>
+
+      {showDetail && <MovieDetail movie={movie} onClose={() => setShowDetail(false)} />}
 
       {/* Navigation Buttons */}
       <button
