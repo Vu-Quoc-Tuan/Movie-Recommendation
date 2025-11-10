@@ -1,0 +1,19 @@
+{
+  "name": "movie-recommendation-supabase",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "migrate": "tsx migrate.ts",
+    "seed": "tsx seed/movies.ts",
+    "setup": "npm run migrate && npm run seed"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.8",
+    "movie-recommendation": "file:..",
+    "pg": "^8.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "tsx": "^4.20.6"
+  }
+}
