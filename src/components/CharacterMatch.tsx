@@ -3,6 +3,7 @@ import { Sparkles, User, Loader2 } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { EmotionSpectrum } from './EmotionSpectrum';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { getApiEndpoint } from '../config/api';
 
 interface CharacterMatchResult {
   movie: {
@@ -44,7 +45,7 @@ export function CharacterMatch() {
     setLoading(true);
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-0c50a72d/analyze-character-match`,
+        getApiEndpoint('/analyze-character-match'),
         {
           method: 'POST',
           headers: {

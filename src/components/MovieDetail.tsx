@@ -6,6 +6,7 @@ import { useAuth, getAuthToken } from './AuthContext';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import html2canvas from 'html2canvas';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { getApiEndpoint } from '../config/api';
 
 interface MovieDetailProps {
   movie: Movie;
@@ -27,7 +28,7 @@ export function MovieDetail({ movie, onClose }: MovieDetailProps) {
     try {
       const token = getAuthToken();
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-0c50a72d/user/save`,
+        getApiEndpoint('/user/save'),
         {
           method: 'POST',
           headers: {
@@ -50,7 +51,7 @@ export function MovieDetail({ movie, onClose }: MovieDetailProps) {
     try {
       const token = getAuthToken() || publicAnonKey;
       await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-0c50a72d/log/decide`,
+        getApiEndpoint('/log/decide'),
         {
           method: 'POST',
           headers: {
