@@ -6,6 +6,7 @@ import { useAuth, getAuthToken } from './AuthContext';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import html2canvas from 'html2canvas';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { getApiEndpoint } from '../config/api';
 
 interface MovieDetailProps {
   movie: Movie;
@@ -27,7 +28,7 @@ export function MovieDetail({ movie, onClose }: MovieDetailProps) {
     try {
       const token = getAuthToken();
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-0c50a72d/user/save`,
+        getApiEndpoint('/user/save'),
         {
           method: 'POST',
           headers: {
@@ -50,7 +51,7 @@ export function MovieDetail({ movie, onClose }: MovieDetailProps) {
     try {
       const token = getAuthToken() || publicAnonKey;
       await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-0c50a72d/log/decide`,
+        getApiEndpoint('/log/decide'),
         {
           method: 'POST',
           headers: {
@@ -256,20 +257,26 @@ export function MovieDetail({ movie, onClose }: MovieDetailProps) {
             </div>
 
             {/* Where to Watch */}
-            <div className="mb-6">
-              <h2 className="text-xl mb-3">Xem tại đây</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {Object.entries(movie.whereToWatch).map(([platform, link]) => (
-                  <button
-                    key={platform}
-                    onClick={() => handleDecide(platform)}
-                    className="px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                  >
-                    {platform}
-                  </button>
-                ))}
+            {movie.whereToWatch && Object.keys(movie.whereToWatch).length > 0 ? (
+              <div className="mb-6">
+                <h2 className="text-xl mb-3">Xem tại đây</h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {Object.entries(movie.whereToWatch).map(([platform, link]) => (
+                    <button
+                      key={platform}
+                      onClick={() => handleDecide(platform)}
+                      className="px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                    >
+                      {platform}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="mb-6 bg-gray-100 dark:bg-gray-700 rounded-xl p-4">
+                <p className="text-gray-600 dark:text-gray-400">Thông tin xem phim sẽ được cập nhật sớm</p>
+              </div>
+            )}
 
             {/* Hidden Share Card */}
             <div className="fixed -left-[9999px]">
@@ -291,8 +298,16 @@ export function MovieDetail({ movie, onClose }: MovieDetailProps) {
         {/* FOOTER */}
         <div className="flex justify-end p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <button
-            onClick={() => handleDecide(Object.keys(movie.whereToWatch)[0])}
-            className="w-full py-4 px-9 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all text-lg"
+            onClick={() => {
+              const firstPlatform = Object.keys(movie.whereToWatch || {})[0];
+              if (firstPlatform) {
+                handleDecide(firstPlatform);
+              } else {
+                alert('Thông tin xem phim chưa được cập nhật');
+              }
+            }}
+            className="w-full py-4 px-9 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all text-lg disabled:opacity-50"
+            disabled={!movie.whereToWatch || Object.keys(movie.whereToWatch).length === 0}
           >
             Chốt xem ngay
           </button>

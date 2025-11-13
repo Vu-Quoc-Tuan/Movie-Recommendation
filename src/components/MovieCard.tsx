@@ -17,7 +17,11 @@ export function MovieCard({ movie }: MovieCardProps) {
     <>
       <div
         className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all group cursor-pointer"
-        onClick={() => setShowDetail(true)}
+        onClick={() => {
+          setShowDetail(true)
+        }
+
+        }
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
@@ -66,12 +70,14 @@ export function MovieCard({ movie }: MovieCardProps) {
             ))}
           </div>
         </div>
-      </div>
+      </div >
 
       {/* Movie Detail Modal */}
-      {showDetail && (
-        <MovieDetail movie={movie} onClose={() => setShowDetail(false)} />
-      )}
+      {
+        showDetail && (
+          <MovieDetail movie={movie} onClose={() => setShowDetail(false)} />
+        )
+      }
     </>
   );
 }

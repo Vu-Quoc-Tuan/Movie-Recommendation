@@ -3,6 +3,7 @@ import { ArrowRight, Heart, Sparkles, Loader2 } from 'lucide-react';
 import { EmotionSpectrum } from './EmotionSpectrum';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { getApiEndpoint } from '../config/api';
 
 const moods = [
   { value: 'anxious', label: '😰 Lo lắng', color: 'bg-red-100 dark:bg-red-900/20' },
@@ -72,7 +73,7 @@ export function EmotionalJourney() {
     setLoading(true);
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-0c50a72d/analyze-emotional-journey`,
+        getApiEndpoint('/analyze-emotional-journey'),
         {
           method: 'POST',
           headers: {

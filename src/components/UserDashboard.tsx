@@ -3,6 +3,7 @@ import { Clock, Bookmark, Image as ImageIcon, TrendingUp, Settings } from 'lucid
 import { useAuth, getAuthToken } from './AuthContext';
 import { projectId } from '../utils/supabase/info';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { getApiEndpoint } from '../config/api';
 
 export function UserDashboard() {
   const [activeTab, setActiveTab] = useState('history');
@@ -23,7 +24,7 @@ export function UserDashboard() {
       const token = getAuthToken();
       const endpoint = activeTab === 'history' ? 'history' : 'saved';
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-0c50a72d/user/${endpoint}`,
+        getApiEndpoint(`/user/${endpoint}`),
         {
           headers: { Authorization: `Bearer ${token}` },
         }

@@ -1,7 +1,14 @@
+import { config } from 'dotenv';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+config({ path: path.resolve(__dirname, '../.env') });
+
 import { createClient } from '@supabase/supabase-js';
 import info from '../src/utils/supabase/info.ts';
 
-// Prefer properties on the default import, then environment variables.
 const SUPABASE_PROJECT_ID = info?.SUPABASE_PROJECT_ID || info?.projectId || process.env.SUPABASE_PROJECT_ID;
 const SUPABASE_PUBLIC_ANON_KEY = info?.SUPABASE_PUBLIC_ANON_KEY || info?.publicAnonKey || process.env.SUPABASE_PUBLIC_ANON_KEY;
 

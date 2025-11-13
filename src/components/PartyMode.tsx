@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Users, Plus, X, Sparkles, Loader2 } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { getApiEndpoint } from '../config/api';
 
 interface PartyMember {
   id: string;
@@ -58,7 +59,7 @@ export function PartyMode() {
       setLoading(true);
       try {
         const response = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-0c50a72d/analyze-party-mood`,
+          getApiEndpoint('/analyze-party-mood'),
           {
             method: 'POST',
             headers: {

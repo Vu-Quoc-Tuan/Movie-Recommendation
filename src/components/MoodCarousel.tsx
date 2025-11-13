@@ -11,8 +11,11 @@ export function MoodCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    const moodMovies = getMoodPicks();
-    setMovies(moodMovies);
+    const loadMoodMovies = async () => {
+      const moodMovies = await getMoodPicks();
+      setMovies(moodMovies);
+    };
+    loadMoodMovies();
   }, []);
 
   const next = () => {
