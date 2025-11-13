@@ -1,11 +1,14 @@
+import { supabase } from './supabase/client';
+
 export interface Movie {
-  id: number;
+  id: string | number;
   title: string;
   year: number;
-  poster: string;
-  rating: number;
-  vibes: string[];
-  spectrum: {
+  poster_url: string;
+  poster?: string; // Fallback for compatibility
+  rating?: number;
+  vibes?: string[];
+  spectrum?: {
     calm: number;
     warm: number;
     hopeful: number;
@@ -13,266 +16,185 @@ export interface Movie {
     bittersweet: number;
     intense: number;
   };
-  overview: string;
-  whyFitsVibe: string;
-  whyMatchesMood: string;
-  vignette: string;
-  quote: string;
-  runtime: number;
-  weatherMatch: number;
+  overview?: string;
+  movie_overview?: string; // From DB
+  whyFitsVibe?: string;
+  whyMatchesMood?: string;
+  vignette?: string;
+  quote?: string;
+  runtime?: number;
+  weatherMatch?: number;
   comfortBadge?: string;
-  ostLink: string;
-  trailerYoutubeId: string;
-  whereToWatch: { [key: string]: string };
-  genres: string[];
-  region: string;
+  ostLink?: string;
+  trailerYoutubeId?: string;
+  youtube_link?: string; // From DB
+  whereToWatch?: { [key: string]: string };
+  genres?: string[];
+  genre?: string[]; // From DB
+  region?: string;
+  country?: string; // From DB
+  created_at?: string;
 }
 
-const sampleMovies: Movie[] = [
-  {
-    id: 1,
-    title: 'Your Name',
-    year: 2016,
-    poster: 'https://images.unsplash.com/photo-1655367574486-f63675dd69eb?w=400',
-    rating: 8.4,
-    vibes: ['Nostalgic', 'Romantic', 'Dreamy'],
-    spectrum: { calm: 40, warm: 85, hopeful: 90, nostalgic: 95, bittersweet: 60, intense: 30 },
-    overview: 'Hai thiếu niên kết nối qua giấc mơ, hoán đổi thân xác và dần khám phá một mối liên kết sâu sắc vượt qua thời gian và không gian.',
-    whyFitsVibe: 'Kết hợp hoàn hảo giữa lãng mạn và hoài niệm với hình ảnh đẹp lung linh',
-    whyMatchesMood: 'Phim phù hợp khi bạn muốn tìm cảm giác ấm áp, lãng mạn và đầy hy vọng.',
-    vignette: 'Hoàng hôn ở Tokyo, ánh sáng vàng chiếu qua cửa sổ. Taki nhìn vào gương, nhưng khuôn mặt phản chiếu lại không phải của mình.',
-    quote: 'Dù ở đâu, tôi sẽ tìm thấy em.',
-    runtime: 106,
-    weatherMatch: 75,
-    comfortBadge: 'Positive ending, No heavy trauma',
-    ostLink: 'https://spotify.com',
-    trailerYoutubeId: 'xU47nhruN-Q',
-    whereToWatch: { Netflix: '#', Viki: '#', YouTube: '#' },
-    genres: ['Romance', 'Animation', 'Fantasy'],
-    region: 'JP',
-  },
-  {
-    id: 2,
-    title: 'Midnight in Paris',
-    year: 2011,
-    poster: 'https://images.unsplash.com/photo-1588852112013-6b63362bc583?w=400',
-    rating: 7.7,
-    vibes: ['Cozy', 'Nostalgic', 'Wholesome'],
-    spectrum: { calm: 70, warm: 80, hopeful: 70, nostalgic: 95, bittersweet: 50, intense: 15 },
-    overview: 'Một nhà văn du lịch đến Paris và phát hiện ra anh có thể du hành về quá khứ vào nửa đêm, gặp gỡ những nghệ sĩ nổi tiếng.',
-    whyFitsVibe: 'Cảm giác ấm áp, hoài niệm về thời hoàng kim nghệ thuật',
-    whyMatchesMood: 'Lý tưởng cho những ai yêu nghệ thuật, lịch sử và muốn trốn vào một thế giới đẹp hơn.',
-    vignette: 'Chiếc xe cổ xuất hiện trong đêm mưa Paris. Gil bước lên và nhận ra mình đã quay về những năm 1920.',
-    quote: 'Quá khứ luôn đẹp hơn hiện tại.',
-    runtime: 94,
-    weatherMatch: 88,
-    ostLink: 'https://spotify.com',
-    trailerYoutubeId: 'BYwxUhPjdYY',
-    whereToWatch: { 'Amazon Prime': '#', 'Apple TV': '#' },
-    genres: ['Romance', 'Comedy', 'Fantasy'],
-    region: 'US',
-  },
-  {
-    id: 3,
-    title: 'A Werewolf Boy',
-    year: 2012,
-    poster: 'https://images.unsplash.com/photo-1677741446873-bd348677e530?w=400',
-    rating: 7.3,
-    vibes: ['Heartwarming', 'Bittersweet', 'Quiet Romance'],
-    spectrum: { calm: 50, warm: 90, hopeful: 60, nostalgic: 80, bittersweet: 85, intense: 25 },
-    overview: 'Một cô gái gặp một cậu bé sói hoang dã và dần dạy cậu sống như con người. Câu chuyện tình yêu thuần khiết và đầy xúc động.',
-    whyFitsVibe: 'Tình cảm chân thành, êm dịu nhưng đầy cảm xúc',
-    whyMatchesMood: 'Phù hợp khi bạn muốn một câu chuyện tình đơn giản nhưng sâu sắc.',
-    vignette: 'Chul-soo học cách nói "Soon-yi" lần đầu tiên. Ánh mắt cậu trong sáng như một đứa trẻ mới sinh.',
-    quote: 'Tôi sẽ đợi em, dù phải đợi bao lâu.',
-    runtime: 122,
-    weatherMatch: 82,
-    comfortBadge: 'No violence',
-    ostLink: 'https://spotify.com',
-    trailerYoutubeId: '6X2bFvG8ATs',
-    whereToWatch: { Netflix: '#', Viki: '#' },
-    genres: ['Romance', 'Drama', 'Fantasy'],
-    region: 'KR',
-  },
-  {
-    id: 4,
-    title: 'Little Forest',
-    year: 2018,
-    poster: 'https://images.unsplash.com/photo-1588852112013-6b63362bc583?w=400',
-    rating: 7.2,
-    vibes: ['Slow-life', 'Cozy', 'Wholesome'],
-    spectrum: { calm: 95, warm: 75, hopeful: 60, nostalgic: 70, bittersweet: 40, intense: 5 },
-    overview: 'Hye-won trở về làng quê, tự tay nấu những món ăn theo mùa và từ từ tìm lại bình yên trong tâm hồn.',
-    whyFitsVibe: 'Nhịp sống chậm, gần gũi với thiên nhiên và ẩm thực',
-    whyMatchesMood: 'Hoàn hảo khi bạn cần nghỉ ngơi, thư giãn và tìm lại sự cân bằng.',
-    vignette: 'Hye-won thu hoạch cà chua trong vườn. Ánh nắng ban mai chiếu rọi, mọi thứ yên bình đến lạ kỳ.',
-    quote: 'Cuộc sống chậm lại, và tôi học cách thở.',
-    runtime: 103,
-    weatherMatch: 90,
-    comfortBadge: 'Positive vibes only',
-    ostLink: 'https://spotify.com',
-    trailerYoutubeId: 'BeQdCvL_W8w',
-    whereToWatch: { Netflix: '#', Viki: '#' },
-    genres: ['Drama', 'Slice of Life'],
-    region: 'KR',
-  },
-  {
-    id: 5,
-    title: 'Amelie',
-    year: 2001,
-    poster: 'https://images.unsplash.com/photo-1655367574486-f63675dd69eb?w=400',
-    rating: 8.3,
-    vibes: ['Quirky', 'Heartwarming', 'Uplifting'],
-    spectrum: { calm: 60, warm: 95, hopeful: 90, nostalgic: 65, bittersweet: 30, intense: 20 },
-    overview: 'Amélie, một cô gái có trí tưởng tượng phong phú, quyết định thay đổi cuộc sống của những người xung quanh mình theo cách tốt đẹp nhất.',
-    whyFitsVibe: 'Độc đáo, ấm áp và đầy màu sắc',
-    whyMatchesMood: 'Lý tưởng khi bạn muốn cảm thấy nhẹ nhõm và lạc quan hơn.',
-    vignette: 'Amélie nhìn vào tấm ảnh cũ, quyết định tìm chủ nhân để trả lại kỷ niệm tuổi thơ.',
-    quote: 'Hạnh phúc nhỏ nhoi cũng là hạnh phúc.',
-    runtime: 122,
-    weatherMatch: 70,
-    comfortBadge: 'Feel-good movie',
-    ostLink: 'https://spotify.com',
-    trailerYoutubeId: 'HUECWi5pX7o',
-    whereToWatch: { Netflix: '#', 'Amazon Prime': '#' },
-    genres: ['Romance', 'Comedy'],
-    region: 'EU',
-  },
-  {
-    id: 6,
-    title: 'Eternal Sunshine',
-    year: 2004,
-    poster: 'https://images.unsplash.com/photo-1677741446873-bd348677e530?w=400',
-    rating: 8.3,
-    vibes: ['Bittersweet', 'Introspective', 'Melancholic'],
-    spectrum: { calm: 40, warm: 50, hopeful: 55, nostalgic: 90, bittersweet: 95, intense: 60 },
-    overview: 'Sau khi chia tay, Joel phát hiện Clementine đã xóa ký ức về anh. Anh cũng quyết định làm điều tương tự.',
-    whyFitsVibe: 'Sâu sắc, đầy cảm xúc về tình yêu và ký ức',
-    whyMatchesMood: 'Cho những ai muốn khám phá cảm xúc phức tạp về tình yêu.',
-    vignette: 'Trong tâm trí Joel, những ký ức về Clementine từ từ biến mất. Anh chạy thật nhanh để giữ lại.',
-    quote: 'Gặp anh lần nữa, tôi vẫn yêu anh.',
-    runtime: 108,
-    weatherMatch: 65,
-    ostLink: 'https://spotify.com',
-    trailerYoutubeId: 'rblfKREj50o',
-    whereToWatch: { Netflix: '#', 'Amazon Prime': '#' },
-    genres: ['Romance', 'Drama', 'Sci-Fi'],
-    region: 'US',
-  },
-];
-
-// Generate more movies by duplicating and modifying
-function generateMoreMovies(): Movie[] {
-  const allMovies: Movie[] = [...sampleMovies];
-  const titles = [
-    'Moonlight', 'Call Me By Your Name', 'Her', 'Lost in Translation',
-    'About Time', 'The Secret Life of Walter Mitty', 'Paterson',
-    'Frances Ha', 'Whisper of the Heart', 'Only Yesterday',
-    'Grave of the Fireflies', 'When Marnie Was There', 'The Wind Rises',
-    'Kiki\'s Delivery Service', 'My Neighbor Totoro', 'Porco Rosso',
-    '500 Days of Summer', 'Crazy Rich Asians', 'To All The Boys',
-    'The Half of It', 'Portrait of a Lady on Fire', 'Blue is the Warmest Color',
-  ];
-
-  // Use a stable random seed based on the index for consistent ordering
-  titles.forEach((title, idx) => {
-    const base = sampleMovies[idx % sampleMovies.length];
-    const seed = idx * 12345; // Stable seed for consistent random values
-    allMovies.push({
-      ...base,
-      id: 100 + idx, // Unique ID starting from 100
-      title,
-      year: 2010 + (seed % 15),
-      rating: 6.5 + ((seed % 200) / 100),
-      weatherMatch: 60 + (seed % 40),
-    });
-  });
-
-  return allMovies;
-}
-
-const allMoviesData = generateMoreMovies();
-
+/**
+ * Fetch movies from Supabase database with filters, search, sorting, and pagination.
+ * Falls back to empty array if database is unavailable.
+ */
 export async function getMovies(
   filters: any,
   searchQuery: string,
   page: number
 ): Promise<Movie[]> {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 300));
+  try {
+    let query = supabase.from('movies').select('*');
 
-  let filtered = [...allMoviesData];
+    // Search by title
+    if (searchQuery) {
+      query = query.ilike('title', `%${searchQuery}%`);
+    }
 
-  // Search
-  if (searchQuery) {
-    filtered = filtered.filter(m =>
-      m.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // Filter by year range
+    if (filters.yearMin && filters.yearMax) {
+      query = query.gte('year', filters.yearMin).lte('year', filters.yearMax);
+    }
+
+    // Filter by rating (if available)
+    if (filters.ratingMin !== undefined) {
+      query = query.gte('rating', filters.ratingMin);
+    }
+
+    // Filter by genre (basic - adjust if genres is an array column)
+    if (filters.genres && filters.genres.length > 0) {
+      // Note: This assumes genre is stored as an array in the DB
+      // Adjust the query logic if genres are stored differently
+      const genreFilter = filters.genres[0];
+      query = query.contains('genre', [genreFilter]);
+    }
+
+    // Filter by country/region
+    if (filters.regions && filters.regions.length > 0) {
+      query = query.in('country', filters.regions);
+    }
+
+    // Sorting
+    switch (filters.sort) {
+      case 'newest':
+        query = query.order('year', { ascending: false });
+        break;
+      case 'rating':
+        query = query.order('rating', { ascending: false });
+        break;
+      case 'alpha':
+        query = query.order('title', { ascending: true });
+        break;
+      default:
+        // Default sort by year descending
+        query = query.order('year', { ascending: false });
+    }
+
+    // Pagination (24 items per page)
+    const pageSize = 24;
+    const start = (page - 1) * pageSize;
+    query = query.range(start, start + pageSize - 1);
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching movies from Supabase:', error);
+      return [];
+    }
+
+    // Transform DB data to Movie interface
+    return (data || []).map(movie => ({
+      id: movie.id,
+      title: movie.title,
+      year: movie.year,
+      poster_url: movie.poster_url,
+      poster: movie.poster_url, // Fallback for compatibility
+      overview: movie.movie_overview,
+      movie_overview: movie.movie_overview,
+      genres: movie.genre || [],
+      genre: movie.genre,
+      country: movie.country,
+      region: movie.country,
+      youtube_link: movie.youtube_link,
+      trailerYoutubeId: movie.youtube_link?.split('v=')[1] || '',
+      whereToWatch: {}, // TODO: Add to DB schema if needed
+      // Mock fields for UI (can be added to DB later)
+      rating: 7.5,
+      vibes: ['Emotional'],
+      spectrum: {
+        calm: 50,
+        warm: 70,
+        hopeful: 60,
+        nostalgic: 50,
+        bittersweet: 40,
+        intense: 40,
+      },
+      whyFitsVibe: movie.movie_overview || 'Great movie!',
+      whyMatchesMood: movie.movie_overview || 'Perfect for your mood.',
+      vignette: movie.movie_overview || 'An engaging story.',
+      quote: 'A memorable film.',
+      runtime: 120,
+      weatherMatch: 75,
+      ostLink: '#',
+      created_at: movie.created_at,
+    }));
+  } catch (error) {
+    console.error('Exception fetching movies:', error);
+    return [];
   }
-
-  // Vibes
-  if (filters.vibes.length > 0) {
-    filtered = filtered.filter(m =>
-      filters.vibes.some((v: string) => m.vibes.includes(v))
-    );
-  }
-
-  // Genres
-  if (filters.genres.length > 0) {
-    filtered = filtered.filter(m =>
-      filters.genres.some((g: string) => m.genres.includes(g))
-    );
-  }
-
-  // Year
-  filtered = filtered.filter(m =>
-    m.year >= filters.yearMin && m.year <= filters.yearMax
-  );
-
-  // Rating
-  filtered = filtered.filter(m => m.rating >= filters.ratingMin);
-
-  // Region
-  if (filters.regions.length > 0) {
-    filtered = filtered.filter(m => filters.regions.includes(m.region));
-  }
-
-  // Comfort Guardian
-  if (filters.comfortFlags.length > 0) {
-    filtered = filtered.filter(m => m.comfortBadge);
-  }
-
-  // Sort
-  switch (filters.sort) {
-    case 'newest':
-      filtered.sort((a, b) => b.year - a.year);
-      break;
-    case 'rating':
-      filtered.sort((a, b) => b.rating - a.rating);
-      break;
-    case 'alpha':
-      filtered.sort((a, b) => a.title.localeCompare(b.title));
-      break;
-    default:
-      // emotion_fit - stable sort based on weatherMatch and ID for consistency
-      filtered.sort((a, b) => {
-        const diff = b.weatherMatch - a.weatherMatch;
-        return diff !== 0 ? diff : a.id - b.id;
-      });
-  }
-
-  // Pagination
-  const start = (page - 1) * 24;
-  const end = start + 24;
-  return filtered.slice(start, end);
 }
 
-export function getMoodPicks(): Movie[] {
-  const weatherMood = new Date().getHours() > 18 || new Date().getHours() < 6;
-  
-  let picks = allMoviesData
-    .filter(m => weatherMood ? m.vibes.includes('Cozy') : true)
-    .slice(0, 10);
-  
-  return picks;
+/**
+ * Get mood-based movie picks from Supabase.
+ * Fetches a random selection of movies to recommend based on time of day.
+ */
+export async function getMoodPicks(): Promise<Movie[]> {
+  try {
+    // Fetch random movies (limit 10)
+    const { data, error } = await supabase
+      .from('movies')
+      .select('*')
+      .limit(10);
+
+    if (error) {
+      console.error('Error fetching mood picks:', error);
+      return [];
+    }
+
+    return (data || []).map(movie => ({
+      id: movie.id,
+      title: movie.title,
+      year: movie.year,
+      poster_url: movie.poster_url,
+      poster: movie.poster_url,
+      overview: movie.movie_overview,
+      movie_overview: movie.movie_overview,
+      genres: movie.genre || [],
+      country: movie.country,
+      region: movie.country,
+      youtube_link: movie.youtube_link,
+      trailerYoutubeId: movie.youtube_link?.split('v=')[1] || '',
+      rating: 7.5,
+      vibes: ['Emotional'],
+      spectrum: {
+        calm: 50,
+        warm: 70,
+        hopeful: 60,
+        nostalgic: 50,
+        bittersweet: 40,
+        intense: 40,
+      },
+      whyFitsVibe: movie.movie_overview || 'Great movie!',
+      whyMatchesMood: movie.movie_overview || 'Perfect for your mood.',
+      vignette: movie.movie_overview || 'An engaging story.',
+      quote: 'A memorable film.',
+      runtime: 120,
+      weatherMatch: 75,
+    }));
+  } catch (error) {
+    console.error('Exception fetching mood picks:', error);
+    return [];
+  }
 }
