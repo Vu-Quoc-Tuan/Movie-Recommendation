@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Sparkles, User, Loader2 } from 'lucide-react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { EmotionSpectrum } from './EmotionSpectrum';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
-import { getApiEndpoint } from '../config/api';
+import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { getApiEndpoint } from '../../config/api';
 
 interface CharacterMatchResult {
   movie: {

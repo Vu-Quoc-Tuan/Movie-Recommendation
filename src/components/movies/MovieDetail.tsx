@@ -1,12 +1,12 @@
 import { useState, useRef } from 'react';
 import { X, Play, Bookmark, Share2, Shield, Cloud, Clock, Download } from 'lucide-react';
-import { Movie } from '../utils/movieData';
-import { EmotionSpectrum } from './EmotionSpectrum';
-import { useAuth, getAuthToken } from './AuthContext';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { Movie } from '../../utils/movieData';
+import { EmotionSpectrum } from '../emotion/EmotionSpectrum';
+import { useAuth, getAuthToken } from '../auth/AuthContext';
+import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import html2canvas from 'html2canvas';
-import { ImageWithFallback } from './figma/ImageWithFallback';
-import { getApiEndpoint } from '../config/api';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { getApiEndpoint } from '../../config/api';
 
 interface MovieDetailProps {
   movie: Movie;

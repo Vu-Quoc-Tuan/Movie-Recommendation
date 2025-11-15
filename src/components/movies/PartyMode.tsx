@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Users, Plus, X, Sparkles, Loader2 } from 'lucide-react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
-import { getApiEndpoint } from '../config/api';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { getApiEndpoint } from '../../config/api';
 
 interface PartyMember {
   id: string;
@@ -66,7 +66,7 @@ export function PartyMode() {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${publicAnonKey}`,
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
               members: members.map(m => ({
                 name: m.name,
                 moodText: m.moodText
@@ -236,21 +236,19 @@ export function PartyMode() {
           <div className="flex items-center justify-center space-x-2 pb-4 border-b border-gray-200 dark:border-gray-700">
             <button
               onClick={() => setMode('buttons')}
-              className={`px-6 py-2 rounded-lg transition-all ${
-                mode === 'buttons'
+              className={`px-6 py-2 rounded-lg transition-all ${mode === 'buttons'
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-              }`}
+                }`}
             >
               Chọn mood
             </button>
             <button
               onClick={() => setMode('text')}
-              className={`px-6 py-2 rounded-lg transition-all flex items-center space-x-2 ${
-                mode === 'text'
+              className={`px-6 py-2 rounded-lg transition-all flex items-center space-x-2 ${mode === 'text'
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-              }`}
+                }`}
             >
               <Sparkles className="w-4 h-4" />
               <span>Mô tả bằng lời</span>
@@ -291,11 +289,10 @@ export function PartyMode() {
                         <button
                           key={mood.value}
                           onClick={() => updateMember(member.id, 'mood', mood.value)}
-                          className={`p-3 rounded-lg transition-all text-left ${
-                            member.mood === mood.value
+                          className={`p-3 rounded-lg transition-all text-left ${member.mood === mood.value
                               ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
                               : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
-                          }`}
+                            }`}
                         >
                           {mood.label}
                         </button>
@@ -334,7 +331,7 @@ export function PartyMode() {
           <button
             onClick={handleFind}
             disabled={
-              mode === 'buttons' 
+              mode === 'buttons'
                 ? !members.every(m => m.name && m.mood)
                 : !members.every(m => m.name && m.moodText?.trim()) || loading
             }
