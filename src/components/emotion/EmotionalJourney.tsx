@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { ArrowRight, Heart, Sparkles, Loader2 } from 'lucide-react';
 import { EmotionSpectrum } from './EmotionSpectrum';
-import { ImageWithFallback } from './figma/ImageWithFallback';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
-import { getApiEndpoint } from '../config/api';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { getApiEndpoint } from '../../config/api';
 
 const moods = [
   { value: 'anxious', label: '😰 Lo lắng', color: 'bg-red-100 dark:bg-red-900/20' },
@@ -109,7 +109,7 @@ export function EmotionalJourney() {
 
   if (showResults) {
     const results = aiResults || journeyResults;
-    const moodDisplay = aiResults 
+    const moodDisplay = aiResults
       ? `AI phân tích: "${moodText.slice(0, 60)}${moodText.length > 60 ? '...' : ''}"`
       : `${moods.find(m => m.value === moodNow)?.label} → ${targetMoods.find(m => m.value === moodTarget)?.label}`;
 
@@ -191,21 +191,19 @@ export function EmotionalJourney() {
           <div className="flex items-center justify-center space-x-2 pb-4 border-b border-gray-200 dark:border-gray-700">
             <button
               onClick={() => setMode('buttons')}
-              className={`px-6 py-2 rounded-lg transition-all ${
-                mode === 'buttons'
+              className={`px-6 py-2 rounded-lg transition-all ${mode === 'buttons'
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-              }`}
+                }`}
             >
               Chọn mood
             </button>
             <button
               onClick={() => setMode('text')}
-              className={`px-6 py-2 rounded-lg transition-all flex items-center space-x-2 ${
-                mode === 'text'
+              className={`px-6 py-2 rounded-lg transition-all flex items-center space-x-2 ${mode === 'text'
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-              }`}
+                }`}
             >
               <Sparkles className="w-4 h-4" />
               <span>Mô tả bằng lời</span>
@@ -224,11 +222,10 @@ export function EmotionalJourney() {
                     <button
                       key={mood.value}
                       onClick={() => setMoodNow(mood.value)}
-                      className={`p-4 rounded-xl transition-all text-left ${
-                        moodNow === mood.value
+                      className={`p-4 rounded-xl transition-all text-left ${moodNow === mood.value
                           ? 'ring-2 ring-purple-500 shadow-lg scale-105'
                           : 'hover:scale-105'
-                      } ${mood.color}`}
+                        } ${mood.color}`}
                     >
                       <div>{mood.label}</div>
                     </button>
@@ -246,11 +243,10 @@ export function EmotionalJourney() {
                     <button
                       key={mood.value}
                       onClick={() => setMoodTarget(mood.value)}
-                      className={`p-4 bg-white dark:bg-gray-800 rounded-xl transition-all text-left hover:scale-105 ${
-                        moodTarget === mood.value
+                      className={`p-4 bg-white dark:bg-gray-800 rounded-xl transition-all text-left hover:scale-105 ${moodTarget === mood.value
                           ? 'ring-2 ring-purple-500 shadow-lg scale-105'
                           : ''
-                      }`}
+                        }`}
                     >
                       <div>{mood.label}</div>
                     </button>

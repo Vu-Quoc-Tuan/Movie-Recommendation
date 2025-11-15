@@ -2,9 +2,6 @@
 # 🎬 Emotional Movie Recommendation App
 
 #### Ứng dụng gợi ý phim theo cảm xúc.  
-#### Dự án gốc được thiết kế trên Figma:  
-👉 [Figma Design](https://www.figma.com/design/DlKmUhNCyRxZS7rEFEIlWI/Emotional-Movie-Recommendation-App)
-
 
 ## 🚀 Cách chạy dự án
 

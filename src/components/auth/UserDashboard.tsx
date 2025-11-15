@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Clock, Bookmark, Image as ImageIcon, TrendingUp, Settings } from 'lucide-react';
 import { useAuth, getAuthToken } from './AuthContext';
-import { projectId } from '../utils/supabase/info';
-import { ImageWithFallback } from './figma/ImageWithFallback';
-import { getApiEndpoint } from '../config/api';
+import { projectId } from '../../utils/supabase/info';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { getApiEndpoint } from '../../config/api';
 
 export function UserDashboard() {
   const [activeTab, setActiveTab] = useState('history');
@@ -68,11 +68,10 @@ export function UserDashboard() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
-                activeTab === tab.id
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg whitespace-nowrap transition-all ${activeTab === tab.id
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
                   : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
+                }`}
             >
               <Icon className="w-4 h-4" />
               <span>{tab.label}</span>
@@ -196,7 +195,7 @@ function StatsTab() {
   return (
     <div>
       <h2 className="text-xl mb-6">Thống kê của bạn</h2>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div className="bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-xl p-6">
           <div className="text-3xl mb-1">24</div>

@@ -3,7 +3,7 @@ import { MovieCard } from './MovieCard';
 import { MovieFilters } from './MovieFilters';
 import { MoodCarousel } from './MoodCarousel';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import { getMovies, Movie } from '../utils/movieData';
+import { getMovies, Movie } from '../../utils/movieData';
 
 export function MovieCatalog() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,7 +44,7 @@ export function MovieCatalog() {
       // Filter out any movies that already exist (by ID) to prevent duplicates
       const existingIds = new Set(movies.map(m => m.id));
       const uniqueNewMovies = newMovies.filter(m => !existingIds.has(m.id));
-      
+
       if (uniqueNewMovies.length > 0) {
         setMovies([...movies, ...uniqueNewMovies]);
         setPage(nextPage);
@@ -89,11 +89,10 @@ export function MovieCatalog() {
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center space-x-2 px-6 py-3 rounded-lg transition-all ${
-              showFilters
-                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-            }`}
+            className={`flex items-center space-x-2 px-6 py-3 rounded-lg transition-all ${showFilters
+              ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+              }`}
           >
             <SlidersHorizontal className="w-5 h-5" />
             <span>Bộ lọc</span>

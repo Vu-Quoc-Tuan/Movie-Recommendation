@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Star, Sparkles } from 'lucide-react';
-import { Movie } from '../utils/movieData';
-import { EmotionSpectrum } from './EmotionSpectrum';
+import { Movie } from '../../utils/movieData';
+import { EmotionSpectrum } from '../emotion/EmotionSpectrum';
 import { MovieDetail } from './MovieDetail';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
 
 interface MovieCardProps {
   movie: Movie;

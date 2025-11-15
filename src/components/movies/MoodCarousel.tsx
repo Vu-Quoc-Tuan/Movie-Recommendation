@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { getMoodPicks, Movie } from '../utils/movieData';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { getMoodPicks, Movie } from '../../utils/movieData';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { MovieDetail } from './MovieDetail';
 
 export function MoodCarousel() {
