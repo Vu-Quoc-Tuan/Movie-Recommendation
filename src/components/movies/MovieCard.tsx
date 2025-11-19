@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Star, Sparkles } from 'lucide-react';
-import { Movie } from '../../features/movie/untils/movieData';
 import { EmotionSpectrum } from '../emotion/EmotionSpectrum';
 import { MovieDetail } from './MovieDetail';
 import { ImageWithFallback } from '../shared/ImageWithFallback';
+import {Movie} from "../../features/movie/types/movie.types";
 
 interface MovieCardProps {
   movie: Movie;

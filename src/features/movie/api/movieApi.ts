@@ -1,46 +1,12 @@
 import { supabase } from '../../../utils/supabase/client';
+import {Movie} from "../types/movie.types";
 
-export interface Movie {
-  id: string | number;
-  title: string;
-  year: number;
-  poster_url: string;
-  poster?: string; // Fallback for compatibility
-  rating?: number;
-  vibes?: string[];
-  spectrum?: {
-    calm: number;
-    warm: number;
-    hopeful: number;
-    nostalgic: number;
-    bittersweet: number;
-    intense: number;
-  };
-  overview?: string;
-  movie_overview?: string; // From DB
-  whyFitsVibe?: string;
-  whyMatchesMood?: string;
-  vignette?: string;
-  quote?: string;
-  runtime?: number;
-  weatherMatch?: number;
-  comfortBadge?: string;
-  ostLink?: string;
-  trailerYoutubeId?: string;
-  youtube_link?: string; // From DB
-  whereToWatch?: { [key: string]: string };
-  genres?: string[];
-  genre?: string[]; // From DB
-  region?: string;
-  country?: string; // From DB
-  created_at?: string;
-}
 
 /**
  * Fetch movies from Supabase database with filters, search, sorting, and pagination.
  * Falls back to empty array if database is unavailable.
  */
-export async function getMovies(
+export async function fetchMovies(
   filters: any,
   searchQuery: string,
   page: number
@@ -150,7 +116,7 @@ export async function getMovies(
  * Get mood-based movie picks from Supabase.
  * Fetches a random selection of movies to recommend based on time of day.
  */
-export async function getMoodPicks(): Promise<Movie[]> {
+export async function fetchMoodPicks(): Promise<Movie[]> {
   try {
     // Fetch random movies (limit 10)
     const { data, error } = await supabase

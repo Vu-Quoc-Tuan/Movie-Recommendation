@@ -3,7 +3,8 @@ import { MovieCard } from './MovieCard';
 import { MovieFilters } from './MovieFilters';
 import { MoodCarousel } from './MoodCarousel';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import { getMovies, Movie } from '../../features/movie/untils/movieData';
+import {useMovies} from "../../features/movie/hooks/useMovies";
+
 
 export function MovieCatalog() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,50 +20,18 @@ export function MovieCatalog() {
     comfortFlags: [] as string[],
     sort: 'emotion_fit',
   });
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const { movies, loading, hasMore, loadMore } = useMovies({
+    filters,
+    searchQuery,
+  });
 
-  useEffect(() => {
-    loadMovies();
-  }, [filters, searchQuery]);
-
-  const loadMovies = async () => {
-    setLoading(true);
-    const newMovies = await getMovies(filters, searchQuery, 1);
-    setMovies(newMovies);
-    setPage(1);
-    setHasMore(newMovies.length === 24);
-    setLoading(false);
-  };
-
-  const loadMore = async () => {
-    const nextPage = page + 1;
-    const newMovies = await getMovies(filters, searchQuery, nextPage);
-    if (newMovies.length > 0) {
-      // Filter out any movies that already exist (by ID) to prevent duplicates
-      const existingIds = new Set(movies.map(m => m.id));
-      const uniqueNewMovies = newMovies.filter(m => !existingIds.has(m.id));
-
-      if (uniqueNewMovies.length > 0) {
-        setMovies([...movies, ...uniqueNewMovies]);
-        setPage(nextPage);
-        setHasMore(newMovies.length === 24);
-      } else {
-        setHasMore(false);
-      }
-    } else {
-      setHasMore(false);
-    }
-  };
 
   useEffect(() => {
     const handleScroll = () => {
       if (
-        window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 &&
-        !loading &&
-        hasMore
+          window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 &&
+          !loading &&
+          hasMore
       ) {
         loadMore();
       }
@@ -70,7 +39,8 @@ export function MovieCatalog() {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [loading, hasMore, page, movies]);
+  }, [loading, hasMore, loadMore]);
+
 
   return (
     <div className="space-y-8">
@@ -137,6 +107,7 @@ export function MovieCatalog() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {movies.map((movie) => (
+                  // @ts-ignore
                 <MovieCard key={movie.id} movie={movie} />
               ))}
             </div>

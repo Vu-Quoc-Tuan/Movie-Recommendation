@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { getMoodPicks, Movie } from '../../features/movie/untils/movieData';
 import { ImageWithFallback } from '../shared/ImageWithFallback';
 import { MovieDetail } from './MovieDetail';
+import {Movie} from "../../features/movie/types/movie.types";
+import {fetchMoodPicks} from "../../features/movie/api/movieApi";
 
 export function MoodCarousel() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -12,7 +13,7 @@ export function MoodCarousel() {
 
   useEffect(() => {
     const loadMoodMovies = async () => {
-      const moodMovies = await getMoodPicks();
+      const moodMovies = await fetchMoodPicks();
       setMovies(moodMovies);
     };
     loadMoodMovies();
