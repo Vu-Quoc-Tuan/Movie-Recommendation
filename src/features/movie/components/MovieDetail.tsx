@@ -1,11 +1,11 @@
 import { useState, useRef } from 'react';
 import { X, Play, Bookmark, Share2, Shield, Cloud } from 'lucide-react';
-import { EmotionSpectrum } from '../emotion/EmotionSpectrum';
-import { useAuth, getAuthToken } from '../auth/AuthContext';
-import { publicAnonKey } from '../../lib/supabase/info';
+import { EmotionSpectrum } from '../../emotion/components/EmotionSpectrum';
+import { useAuth, getAuthToken } from '../../auth/components/AuthContext';
+import { publicAnonKey } from '../../../lib/supabase/info';
 import html2canvas from 'html2canvas';
-import { getApiEndpoint } from '../../lib/api/apiClient';
-import {Movie} from "../../features/movie/types/movie.types";
+import { getApiEndpoint } from '../../../lib/api/apiClient';
+import {Movie} from "../types/movie.types";
 
 interface MovieDetailProps {
   movie: Movie;

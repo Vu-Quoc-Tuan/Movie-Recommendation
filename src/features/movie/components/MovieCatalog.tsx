@@ -3,7 +3,7 @@ import { MovieCard } from './MovieCard';
 import { MovieFilters } from './MovieFilters';
 import { MoodCarousel } from './MoodCarousel';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import {useMovies} from "../../features/movie/hooks/useMovies";
+import {useMovies} from "../hooks/useMovies";
 
 
 export function MovieCatalog() {

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { ImageWithFallback } from '../shared/ImageWithFallback';
+import { ImageWithFallback } from '../../../components/shared/ImageWithFallback';
 import { MovieDetail } from './MovieDetail';
-import {Movie} from "../../features/movie/types/movie.types";
-import {fetchMoodPicks} from "../../features/movie/api/movieApi";
+import {Movie} from "../types/movie.types";
+import {fetchMoodPicks} from "../api/movieApi";
 
 export function MoodCarousel() {
   const [movies, setMovies] = useState<Movie[]>([]);

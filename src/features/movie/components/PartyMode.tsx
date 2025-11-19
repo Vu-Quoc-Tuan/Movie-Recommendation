@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Users, Plus, X, Sparkles, Loader2 } from 'lucide-react';
-import { ImageWithFallback } from '../shared/ImageWithFallback';
-import {analyzePartyMood} from "../../features/emotion/api/emotionApi";
+import { ImageWithFallback } from '../../../components/shared/ImageWithFallback';
+import {analyzePartyMood} from "../../emotion/api/emotionApi";
 
 interface PartyMember {
   id: string;
