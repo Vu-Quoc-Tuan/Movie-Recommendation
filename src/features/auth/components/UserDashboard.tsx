@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Clock, Bookmark, Image as ImageIcon, TrendingUp, Settings } from 'lucide-react';
 import { useAuth, getAuthToken } from './AuthContext';
-import { ImageWithFallback } from '../shared/ImageWithFallback';
-import { getApiEndpoint } from '../../lib/api/apiClient';
+import { ImageWithFallback } from '../../../components/shared/ImageWithFallback';
+import { getApiEndpoint } from '../../../lib/api/apiClient';
 
 export function UserDashboard() {
   const [activeTab, setActiveTab] = useState('history');

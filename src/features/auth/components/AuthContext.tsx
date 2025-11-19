@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import {loginApi, registerApi} from "../../features/auth/api/authApi";
-import {AuthContextType} from "../../features/auth/types/auth.types";
+import {loginApi, registerApi} from "../api/authApi";
+import {AuthContextType} from "../types/auth.types";
 import {User} from "@supabase/supabase-js";
 
 
