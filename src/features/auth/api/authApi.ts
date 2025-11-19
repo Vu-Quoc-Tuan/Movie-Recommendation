@@ -1,6 +1,6 @@
-import {getApiEndpoint} from "../../../config/api";
+import {getApiEndpoint} from "../../../lib/api/apiClient";
 
-import {SUPABASE_PUBLIC_ANON_KEY} from "../../../utils/supabase/config";
+import {SUPABASE_PUBLIC_ANON_KEY} from "../../../lib/supabase/config";
 
 export async function loginApi(email: string, password: string) {
     const response = await fetch(getApiEndpoint('/auth/login'), {
