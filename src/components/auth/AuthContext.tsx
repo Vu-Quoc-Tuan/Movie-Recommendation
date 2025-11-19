@@ -1,20 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { publicAnonKey } from '../../utils/supabase/info';
-import { getApiEndpoint } from '../../config/api';
+import {loginApi, registerApi} from "../../features/auth/api/authApi";
+import {AuthContextType} from "../../features/auth/types/auth.types";
+import {User} from "@supabase/supabase-js";
 
-interface User {
-  id: string;
-  email: string;
-  name?: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => void;
-  isLoading: boolean;
-}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -34,21 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch(getApiEndpoint('/auth/login'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${publicAnonKey}`,
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || 'Đăng nhập thất bại');
-      }
-
-      const data = await response.json();
+      const data = await loginApi(email, password);
       setUser(data.user);
       localStorage.setItem('cine_user', JSON.stringify(data.user));
       localStorage.setItem('cine_token', data.token);
@@ -60,21 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (email: string, password: string, name: string) => {
     try {
-      const response = await fetch(getApiEndpoint('/auth/register'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${publicAnonKey}`,
-        },
-        body: JSON.stringify({ email, password, name }),
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || 'Đăng ký thất bại');
-      }
-
-      const data = await response.json();
+      const data = await registerApi(email, password, name);
       setUser(data.user);
       localStorage.setItem('cine_user', JSON.stringify(data.user));
       localStorage.setItem('cine_token', data.token);
