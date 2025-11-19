@@ -181,7 +181,7 @@ export function MovieDetail({ movie, onClose }: MovieDetailProps) {
                   key={index}
                   className="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-sm"
                 >
-                  {vibe}
+                  {vibe.charAt(0).toUpperCase() + vibe.slice(1)}
                 </span>
               ))}
             </div>
@@ -322,7 +322,7 @@ export function MovieDetail({ movie, onClose }: MovieDetailProps) {
           </button>
         </div>
       </div>
-    </div>
+    </div >
 
   );
 }

@@ -65,7 +65,7 @@ export function MovieCard({ movie }: MovieCardProps) {
                 key={index}
                 className="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full"
               >
-                {vibe}
+                {vibe.charAt(0).toUpperCase() + vibe.slice(1)}
               </span>
             ))}
           </div>
