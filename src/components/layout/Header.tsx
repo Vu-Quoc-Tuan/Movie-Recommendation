@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Moon, Sun, Film, Heart, Users, User, UserCircle } from 'lucide-react';
-import { useAuth } from "../auth/AuthContext"
+import { useAuth } from "../../features/auth/components/AuthContext"
 
 function ThemeToggle() {
     const [isDark, setIsDark] = useState(true);

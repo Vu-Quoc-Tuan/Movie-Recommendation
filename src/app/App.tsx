@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { MovieCatalog } from '../components/movies/MovieCatalog';
-import { EmotionalJourney } from '../components/emotion/EmotionalJourney';
-import { PartyMode } from '../components/movies/PartyMode';
-import { CharacterMatch } from '../components/emotion/CharacterMatch';
-import { UserDashboard } from '../components/auth/UserDashboard';
-import { AuthModal } from '../components/auth/AuthModal';
-import { AuthProvider, useAuth } from '../components/auth/AuthContext';
+import { MovieCatalog } from '../features/movie/components/MovieCatalog';
+import { EmotionalJourney } from '../features/emotion/components/EmotionalJourney';
+import { PartyMode } from '../features/movie/components/PartyMode';
+import { CharacterMatch } from '../features/emotion/components/CharacterMatch';
+import { UserDashboard } from '../features/auth/components/UserDashboard';
+import { AuthModal } from '../features/auth/components/AuthModal';
+import { AuthProvider, useAuth } from '../features/auth/components/AuthContext';
 import { Moon, Sun, Film, Heart, Users, User, UserCircle } from 'lucide-react';
 import Header from '../components/layout/Header';
 import {AppProviders} from "./Providers";

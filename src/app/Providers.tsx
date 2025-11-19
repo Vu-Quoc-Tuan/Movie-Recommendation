@@ -1,5 +1,5 @@
 import {ThemeProvider} from "../components/ui/ThemeProvider";
-import {AuthProvider} from "../components/auth/AuthContext";
+import {AuthProvider} from "../features/auth/components/AuthContext";
 
 
 export function AppProviders({ children }: { // @ts-ignore

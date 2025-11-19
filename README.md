@@ -13,7 +13,8 @@ npm i
 ### 2. Lấy dữ liệu phim từ database
 
 ```bash
-cd D:\Coding\github\Movie-Recommendation\supabase
+cd D:\Coding\github\Movie-Recommendation\supabase 
+#or cd supabase
 npx tsx seed/movies.ts
 ```
 
@@ -21,7 +22,8 @@ npx tsx seed/movies.ts
 
 ```bash
 cd D:\Coding\github\Movie-Recommendation
-deno run -A src/supabase/functions/server/index.tsx
+#or cd ../
+deno run -A server/functions/make-server/index.tsx
 ```
 
 ### 4. Chạy frontend
