@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Sparkles, User, Loader2 } from 'lucide-react';
-import { ImageWithFallback } from '../shared/ImageWithFallback';
+import { ImageWithFallback } from '../../../components/shared/ImageWithFallback';
 import { EmotionSpectrum } from './EmotionSpectrum';
-import {CharacterMatchResult} from "../../features/emotion/types/emotion.types";
-import {analyzeCharacterMatch} from "../../features/emotion/api/emotionApi";
+import {CharacterMatchResult} from "../types/emotion.types";
+import {analyzeCharacterMatch} from "../api/emotionApi";
 
 export function CharacterMatch() {
   const [moodText, setMoodText] = useState('');

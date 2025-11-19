@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { ArrowRight, Heart, Sparkles, Loader2 } from 'lucide-react';
 import { EmotionSpectrum } from './EmotionSpectrum';
-import { ImageWithFallback } from '../shared/ImageWithFallback';
-import {analyzeEmotionalJourney} from "../../features/emotion/api/emotionApi";
+import { ImageWithFallback } from '../../../components/shared/ImageWithFallback';
+import {analyzeEmotionalJourney} from "../api/emotionApi";
 
 const moods = [
   { value: 'anxious', label: '😰 Lo lắng', color: 'bg-red-100 dark:bg-red-900/20' },
