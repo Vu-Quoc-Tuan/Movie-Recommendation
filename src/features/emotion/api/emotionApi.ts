@@ -4,8 +4,8 @@ import type {
     PartyMoodMember,
     PartyMoodResponse,
 } from '../types/emotion.types';
-import {getApiEndpoint} from "../../../config/api";
-import {SUPABASE_PUBLIC_ANON_KEY} from "../../../utils/supabase/config";
+import {getApiEndpoint} from "../../../lib/api/apiClient";
+import {SUPABASE_PUBLIC_ANON_KEY} from "../../../lib/supabase/config";
 
 /**
  * Gọi API phân tích liệu trình cảm xúc từ văn bản
