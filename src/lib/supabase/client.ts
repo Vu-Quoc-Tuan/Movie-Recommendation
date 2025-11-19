@@ -13,7 +13,7 @@ if (!SUPABASE_URL) {
 }
 
 if (!SUPABASE_PUBLIC_ANON_KEY) {
-    throw new Error('SUPABASE_PUBLIC_ANON_KEY is not configured. Check your src/utils/supabase/config.ts');
+    throw new Error('SUPABASE_PUBLIC_ANON_KEY is not configured. Check your src/lib/supabase/config.ts');
 }
 
 /**
