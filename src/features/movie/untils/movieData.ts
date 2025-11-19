@@ -1,4 +1,4 @@
-import { supabase } from './supabase/client';
+import { supabase } from '../../../utils/supabase/client';
 
 export interface Movie {
   id: string | number;

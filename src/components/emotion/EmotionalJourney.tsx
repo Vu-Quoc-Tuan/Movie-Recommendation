@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ArrowRight, Heart, Sparkles, Loader2 } from 'lucide-react';
 import { EmotionSpectrum } from './EmotionSpectrum';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { ImageWithFallback } from '../shared/ImageWithFallback';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { getApiEndpoint } from '../../config/api';
 

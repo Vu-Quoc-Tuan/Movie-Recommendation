@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { MovieCatalog } from './components/movies/MovieCatalog';
-import { EmotionalJourney } from './components/emotion/EmotionalJourney';
-import { PartyMode } from './components/movies/PartyMode';
-import { CharacterMatch } from './components/emotion/CharacterMatch';
-import { UserDashboard } from './components/auth/UserDashboard';
-import { AuthModal } from './components/auth/AuthModal';
-import { ThemeProvider } from './components/ui/ThemeProvider';
-import { AuthProvider, useAuth } from './components/auth/AuthContext';
+import { MovieCatalog } from '../components/movies/MovieCatalog';
+import { EmotionalJourney } from '../components/emotion/EmotionalJourney';
+import { PartyMode } from '../components/movies/PartyMode';
+import { CharacterMatch } from '../components/emotion/CharacterMatch';
+import { UserDashboard } from '../components/auth/UserDashboard';
+import { AuthModal } from '../components/auth/AuthModal';
+import { AuthProvider, useAuth } from '../components/auth/AuthContext';
 import { Moon, Sun, Film, Heart, Users, User, UserCircle } from 'lucide-react';
-import Header from './layout/Header';
+import Header from '../components/layout/Header';
+import {AppProviders} from "./Providers";
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('catalog');
@@ -61,10 +61,8 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
+    <AppProviders children={undefined}>
         <AppContent />
-      </AuthProvider>
-    </ThemeProvider>
+    </AppProviders>
   );
 }

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Clock, Bookmark, Image as ImageIcon, TrendingUp, Settings } from 'lucide-react';
 import { useAuth, getAuthToken } from './AuthContext';
 import { projectId } from '../../utils/supabase/info';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { ImageWithFallback } from '../shared/ImageWithFallback';
 import { getApiEndpoint } from '../../config/api';
 
 export function UserDashboard() {
