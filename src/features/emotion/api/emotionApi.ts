@@ -1,0 +1,71 @@
+import type {
+    JourneyResult,
+    CharacterMatchResult,
+    PartyMoodMember,
+    PartyMoodResponse,
+} from '../types/emotion.types';
+import {getApiEndpoint} from "../../../config/api";
+import {SUPABASE_PUBLIC_ANON_KEY} from "../../../utils/supabase/config";
+
+/**
+ * Gọi API phân tích liệu trình cảm xúc từ văn bản
+ */
+export async function analyzeEmotionalJourney(moodText: string): Promise<JourneyResult> {
+    const response = await fetch(getApiEndpoint('/analyze-emotional-journey'), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${SUPABASE_PUBLIC_ANON_KEY}`,
+        },
+        body: JSON.stringify({ moodText }),
+    });
+
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Failed to analyze emotional journey');
+    }
+
+    return response.json();
+}
+
+/**
+ * Gọi API tìm nhân vật phù hợp với cảm xúc hiện tại
+ */
+export async function analyzeCharacterMatch(moodText: string): Promise<CharacterMatchResult> {
+    const response = await fetch(getApiEndpoint('/analyze-character-match'), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${SUPABASE_PUBLIC_ANON_KEY}`,
+        },
+        body: JSON.stringify({ moodText }),
+    });
+
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Failed to analyze character match');
+    }
+
+    return response.json();
+}
+
+/**
+ * Gọi API phân tích mood nhóm và trả về gợi ý phim
+ */
+export async function analyzePartyMood(members: PartyMoodMember[]): Promise<PartyMoodResponse> {
+    const response = await fetch(getApiEndpoint('/analyze-party-mood'), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${SUPABASE_PUBLIC_ANON_KEY}`,
+        },
+        body: JSON.stringify({ members }),
+    });
+
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Failed to analyze party mood');
+    }
+
+    return response.json();
+}

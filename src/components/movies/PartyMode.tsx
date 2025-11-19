@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Users, Plus, X, Sparkles, Loader2 } from 'lucide-react';
 import { ImageWithFallback } from '../shared/ImageWithFallback';
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
-import { getApiEndpoint } from '../../config/api';
+import {analyzePartyMood} from "../../features/emotion/api/emotionApi";
 
 interface PartyMember {
   id: string;
@@ -58,28 +57,9 @@ export function PartyMode() {
 
       setLoading(true);
       try {
-        const response = await fetch(
-          getApiEndpoint('/analyze-party-mood'),
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${publicAnonKey}`,
-            },
-            body: JSON.stringify({
-              members: members.map(m => ({
-                name: m.name,
-                moodText: m.moodText
-              }))
-            }),
-          }
+        const data = await analyzePartyMood(
+            members.map(m => ({ name: m.name, moodText: m.moodText }))
         );
-
-        if (!response.ok) {
-          throw new Error('Failed to analyze party mood');
-        }
-
-        const data = await response.json();
         setAiRecommendations(data.recommendations);
         setShowResults(true);
       } catch (error) {

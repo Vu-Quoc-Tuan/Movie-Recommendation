@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { ArrowRight, Heart, Sparkles, Loader2 } from 'lucide-react';
 import { EmotionSpectrum } from './EmotionSpectrum';
 import { ImageWithFallback } from '../shared/ImageWithFallback';
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
-import { getApiEndpoint } from '../../config/api';
+import {analyzeEmotionalJourney} from "../../features/emotion/api/emotionApi";
 
 const moods = [
   { value: 'anxious', label: '😰 Lo lắng', color: 'bg-red-100 dark:bg-red-900/20' },
@@ -72,23 +71,7 @@ export function EmotionalJourney() {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        getApiEndpoint('/analyze-emotional-journey'),
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${publicAnonKey}`,
-          },
-          body: JSON.stringify({ moodText }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to analyze mood');
-      }
-
-      const data = await response.json();
+      const data = await analyzeEmotionalJourney(moodText);
       setAiResults(data);
       setShowResults(true);
     } catch (error) {

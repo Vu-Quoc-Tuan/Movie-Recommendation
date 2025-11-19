@@ -2,31 +2,8 @@ import { useState } from 'react';
 import { Sparkles, User, Loader2 } from 'lucide-react';
 import { ImageWithFallback } from '../shared/ImageWithFallback';
 import { EmotionSpectrum } from './EmotionSpectrum';
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
-import { getApiEndpoint } from '../../config/api';
-
-interface CharacterMatchResult {
-  movie: {
-    title: string;
-    year: string;
-    poster: string;
-    rating: number;
-    character: string;
-    characterDescription: string;
-    similarity: number;
-    whyMatch: string;
-    vignette: string;
-    quote: string;
-    spectrum: {
-      calm: number;
-      warm: number;
-      hopeful: number;
-      nostalgic: number;
-      bittersweet: number;
-      intense: number;
-    };
-  };
-}
+import {CharacterMatchResult} from "../../features/emotion/types/emotion.types";
+import {analyzeCharacterMatch} from "../../features/emotion/api/emotionApi";
 
 export function CharacterMatch() {
   const [moodText, setMoodText] = useState('');
@@ -44,23 +21,7 @@ export function CharacterMatch() {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        getApiEndpoint('/analyze-character-match'),
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${publicAnonKey}`,
-          },
-          body: JSON.stringify({ moodText }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to analyze mood');
-      }
-
-      const data = await response.json();
+      const data = await analyzeCharacterMatch(moodText);
       setResult(data);
     } catch (error) {
       console.error('Error analyzing character match:', error);
