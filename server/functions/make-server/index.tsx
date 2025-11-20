@@ -292,7 +292,7 @@ app.get('/make-server/user/history', async (c) => {
     // Query user_history
     const { data: historyData, error: historyError } = await supabase
       .from('user_history')
-      .select('id, movie_id, watched_at, mood_tag')
+      .select('id, movie_id, watched_at')
       .eq('user_id', userId)
       .order('watched_at', { ascending: false })
       .limit(50);
@@ -372,6 +372,44 @@ app.post('/make-server/user/history', async (c) => {
   } catch (error: any) {
     console.error('Add history error:', error);
     return c.text(error.message || 'Failed to add history', 500);
+  }
+});
+
+// Delete history for a specific movie
+app.delete('/make-server/user/history/:movie_id', async (c) => {
+  try {
+    const token = c.req.header('Authorization')?.split(' ')[1];
+    if (!token) {
+      return c.text('Unauthorized', 401);
+    }
+
+    const userId = await verifyToken(token);
+    if (!userId) {
+      return c.text('Unauthorized', 401);
+    }
+
+    const movieId = c.req.param('movie_id');
+    if (!movieId) {
+      return c.text('Movie ID is required', 400);
+    }
+
+    // Delete all history records for this user and movie
+    const { error } = await supabase
+      .from('user_history')
+      .delete()
+      .eq('user_id', userId)
+      .eq('movie_id', movieId);
+
+    if (error) {
+      console.error('Supabase delete error:', error);
+      throw error;
+    }
+
+    console.log('History deleted:', { userId, movieId });
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('Delete history error:', error);
+    return c.text(error.message || 'Failed to delete history', 500);
   }
 });
 
