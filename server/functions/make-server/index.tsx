@@ -14,9 +14,17 @@ const app = new Hono();
 app.use('*', cors({
   origin: '*',
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization'],
+  allowHeaders: ['Content-Type', 'Authorization', 'apikey', 'x-client-info'],
+  exposeHeaders: ['Content-Length', 'X-Kuma-Revision'],
+  maxAge: 600,
+  credentials: true,
 }));
 app.use('*', logger(console.log));
+
+// Handle OPTIONS explicitly
+app.options('*', (c) => {
+  return c.text('', 204);
+});
 
 // Supabase client
 const supabase = createClient(
@@ -46,11 +54,45 @@ async function verifyToken(token: string): Promise<string | null> {
   }
 }
 
+// Helper: Ensure user exists in public.users table (to satisfy foreign keys)
+async function ensureUserInPublicTable(userId: string) {
+  try {
+    // 1. Check if user exists in public.users
+    const { data } = await supabase.from('users').select('id').eq('id', userId).maybeSingle();
+    if (data) return;
+
+    // 2. If not, fetch from KV
+    const email = await kv.get(`user:id:${userId}`);
+    if (!email) return;
+    
+    const user = await kv.get(`user:${email}`);
+    if (!user) return;
+
+    // 3. Insert into public.users
+    // We use upsert to be safe against race conditions
+    const { error } = await supabase.from('users').upsert({
+      id: userId,
+      email: user.email,
+      name: user.name,
+      created_at: user.createdAt || new Date().toISOString()
+    });
+    
+    if (error) {
+      console.warn('Warning: Could not sync user to public.users table:', error.message);
+    } else {
+      console.log('Synced user to public.users:', userId);
+    }
+  } catch (err) {
+    console.error('Error in ensureUserInPublicTable:', err);
+  }
+}
+
 // ===== AUTH ROUTES =====
 
 // Register
-app.post('/make-server-0c50a72d/auth/register', async (c) => {
+app.post('/make-server/auth/register', async (c) => {
   try {
+    console.log('Register request received');
     const { email, password, name } = await c.req.json();
 
     if (!email || !password) {
@@ -58,12 +100,14 @@ app.post('/make-server-0c50a72d/auth/register', async (c) => {
     }
 
     // Check if user exists
+    console.log('Checking if user exists:', email);
     const existingUser = await kv.get(`user:${email}`);
     if (existingUser) {
       return c.text('User already exists', 400);
     }
 
     // Hash password
+    console.log('Hashing password...');
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Create user
@@ -80,24 +124,32 @@ app.post('/make-server-0c50a72d/auth/register', async (c) => {
       vibesPref: [],
     };
 
+    console.log('Saving user to KV:', userId);
     await kv.set(`user:${email}`, user);
     await kv.set(`user:id:${userId}`, email);
 
+    // Sync to public.users table
+    console.log('Syncing to public.users...');
+    await ensureUserInPublicTable(userId);
+
     // Generate token
+    console.log('Generating token...');
     const token = await generateToken(userId);
 
+    console.log('Registration successful:', userId);
     return c.json({
       user: { id: user.id, email: user.email, name: user.name },
       token,
     });
   } catch (error: any) {
-    console.error('Registration error:', error);
+    console.error('Registration error details:', error);
+    console.error('Stack trace:', error.stack);
     return c.text(error.message || 'Registration failed', 500);
   }
 });
 
 // Login
-app.post('/make-server-0c50a72d/auth/login', async (c) => {
+app.post('/make-server/auth/login', async (c) => {
   try {
     const { email, password } = await c.req.json();
 
@@ -117,6 +169,9 @@ app.post('/make-server-0c50a72d/auth/login', async (c) => {
       return c.text('Invalid credentials', 401);
     }
 
+    // Sync to public.users table (in case it was missed or deleted)
+    await ensureUserInPublicTable(user.id);
+
     // Generate token
     const token = await generateToken(user.id);
 
@@ -133,7 +188,7 @@ app.post('/make-server-0c50a72d/auth/login', async (c) => {
 // ===== USER ROUTES =====
 
 // Get user profile
-app.get('/make-server-0c50a72d/user/profile', async (c) => {
+app.get('/make-server/user/profile', async (c) => {
   try {
     const token = c.req.header('Authorization')?.split(' ')[1];
     if (!token) {
@@ -168,7 +223,7 @@ app.get('/make-server-0c50a72d/user/profile', async (c) => {
 });
 
 // Save movie
-app.post('/make-server-0c50a72d/user/save', async (c) => {
+app.post('/make-server/user/save', async (c) => {
   try {
     const token = c.req.header('Authorization')?.split(' ')[1];
     if (!token) {
@@ -200,7 +255,7 @@ app.post('/make-server-0c50a72d/user/save', async (c) => {
 });
 
 // Get saved movies
-app.get('/make-server-0c50a72d/user/saved', async (c) => {
+app.get('/make-server/user/saved', async (c) => {
   try {
     const token = c.req.header('Authorization')?.split(' ')[1];
     if (!token) {
@@ -222,7 +277,7 @@ app.get('/make-server-0c50a72d/user/saved', async (c) => {
 });
 
 // Get history
-app.get('/make-server-0c50a72d/user/history', async (c) => {
+app.get('/make-server/user/history', async (c) => {
   try {
     const token = c.req.header('Authorization')?.split(' ')[1];
     if (!token) {
@@ -234,19 +289,77 @@ app.get('/make-server-0c50a72d/user/history', async (c) => {
       return c.text('Unauthorized', 401);
     }
 
-    const history = await kv.getByPrefix(`history:${userId}:`);
+    // Query Supabase
+    const { data, error } = await supabase
+      .from('user_history')
+      .select(`
+        movie_id,
+        watched_at,
+        movies (
+          title,
+          genre,
+          movie_overview
+        )
+      `)
+      .eq('user_id', userId)
+      .order('watched_at', { ascending: false })
+      .limit(10);
 
-    return c.json(history || []);
+    if (error) {
+      console.error('Supabase history error:', error);
+      throw error;
+    }
+
+    return c.json(data || []);
   } catch (error: any) {
     console.error('Get history error:', error);
     return c.text(error.message || 'Failed to get history', 500);
   }
 });
 
+// Add history
+app.post('/make-server/user/history', async (c) => {
+  try {
+    const token = c.req.header('Authorization')?.split(' ')[1];
+    if (!token) {
+      return c.text('Unauthorized', 401);
+    }
+
+    const userId = await verifyToken(token);
+    if (!userId) {
+      return c.text('Unauthorized', 401);
+    }
+
+    const { movie_id } = await c.req.json();
+
+    // Ensure user exists in public.users before inserting history
+    await ensureUserInPublicTable(userId);
+
+    // Insert into Supabase
+    const { error } = await supabase
+      .from('user_history')
+      .insert({
+        user_id: userId,
+        movie_id: movie_id,
+        watched_at: new Date().toISOString()
+      });
+
+    if (error) {
+      console.error('Supabase insert history error:', error);
+      throw error;
+    }
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('Add history error:', error);
+    return c.text(error.message || 'Failed to add history', 500);
+  }
+});
+
 // ===== LOGGING ROUTES =====
 
 // Log decide (movie watch decision)
-app.post('/make-server-0c50a72d/log/decide', async (c) => {
+app.post('/make-server/log/decide', async (c) => {
   try {
     const token = c.req.header('Authorization')?.split(' ')[1];
     const userId = token ? await verifyToken(token) : 'anonymous';
@@ -278,7 +391,7 @@ app.post('/make-server-0c50a72d/log/decide', async (c) => {
 });
 
 // Log detail open
-app.post('/make-server-0c50a72d/log/detail', async (c) => {
+app.post('/make-server/log/detail', async (c) => {
   try {
     const token = c.req.header('Authorization')?.split(' ')[1];
     const userId = token ? await verifyToken(token) : 'anonymous';
@@ -307,7 +420,7 @@ app.post('/make-server-0c50a72d/log/detail', async (c) => {
 
 // ===== EMOTIONAL JOURNEY =====
 
-app.post('/make-server-0c50a72d/emotional-journey', async (c) => {
+app.post('/make-server/emotional-journey', async (c) => {
   try {
     const { mood_now, mood_target } = await c.req.json();
 
@@ -339,7 +452,7 @@ app.post('/make-server-0c50a72d/emotional-journey', async (c) => {
 
 // ===== PARTY MODE =====
 
-app.post('/make-server-0c50a72d/party-suggest', async (c) => {
+app.post('/make-server/party-suggest', async (c) => {
   try {
     const { members } = await c.req.json();
 
@@ -401,7 +514,7 @@ async function analyzeMoodText(text: string): Promise<any> {
 }
 
 // Emotional Journey - AI text analysis
-app.post('/make-server-0c50a72d/analyze-emotional-journey', async (c) => {
+app.post('/make-server/analyze-emotional-journey', async (c) => {
   try {
     const { moodText } = await c.req.json();
 
@@ -458,7 +571,7 @@ app.post('/make-server-0c50a72d/analyze-emotional-journey', async (c) => {
 });
 
 // Party Mode - AI text analysis
-app.post('/make-server-0c50a72d/analyze-party-mood', async (c) => {
+app.post('/make-server/analyze-party-mood', async (c) => {
   try {
     const { members } = await c.req.json();
 
@@ -520,7 +633,7 @@ app.post('/make-server-0c50a72d/analyze-party-mood', async (c) => {
 });
 
 // Character Match - AI analysis
-app.post('/make-server-0c50a72d/analyze-character-match', async (c) => {
+app.post('/make-server/analyze-character-match', async (c) => {
   try {
     const { moodText } = await c.req.json();
 
@@ -580,8 +693,135 @@ app.post('/make-server-0c50a72d/analyze-character-match', async (c) => {
   }
 });
 
+// ===== RECOMMENDATION ROUTES =====
+
+// Personal Recommendation Endpoint
+app.post('/make-server/recommend/personal', async (c) => {
+  try {
+    const token = c.req.header('Authorization')?.split(' ')[1];
+    if (!token) {
+      return c.text('Unauthorized', 401);
+    }
+
+    const userId = await verifyToken(token);
+    if (!userId) {
+      return c.text('Unauthorized', 401);
+    }
+
+    // 1. Get User History (Last 5 movies) with their moods
+    const { data: history, error: historyError } = await supabase
+      .from('user_history')
+      .select(`
+        movie_id,
+        movies (
+          id,
+          mood
+        )
+      `)
+      .eq('user_id', userId)
+      .order('watched_at', { ascending: false })
+      .limit(5);
+
+    if (historyError) {
+      console.error('History fetch error:', historyError);
+      throw historyError;
+    }
+
+    // 1b. Get ALL watched movie IDs to exclude them
+    const { data: allWatched, error: watchedError } = await supabase
+      .from('user_history')
+      .select('movie_id')
+      .eq('user_id', userId);
+      
+    const allWatchedIds = allWatched ? allWatched.map((h: any) => h.movie_id) : [];
+    console.log(`User ${userId} has watched ${allWatchedIds.length} movies.`);
+    console.log('Watched IDs to exclude:', allWatchedIds);
+
+    // Helper to get random movies excluding watched
+    const getRandomMovies = async (limit: number, excludeIds: string[]) => {
+      console.log(`Getting random movies, excluding ${excludeIds.length} watched IDs`);
+      let q = supabase.from('movies').select('*');
+      if (excludeIds.length > 0) {
+        // Format for PostgREST: ("id1","id2","id3")
+        const formattedIds = `(${excludeIds.map(id => `"${id}"`).join(',')})`;
+        q = q.not('id', 'in', formattedIds);
+      }
+      const { data, error } = await q.limit(limit);
+      if (error) {
+        console.error('Random movies query error:', error);
+      }
+      console.log(`Random movies returned: ${data?.length || 0} movies`);
+      return data || [];
+    };
+
+    if (!history || history.length === 0) {
+      // Fallback for new users
+      return c.json(await getRandomMovies(10, allWatchedIds));
+    }
+
+    // 2. Extract Moods
+    // Log each movie's mood for debugging
+    console.log('Recent 5 movies with their moods:');
+    history.forEach((h: any, index: number) => {
+      console.log(`  ${index + 1}. Movie ID: ${h.movie_id}, Mood: ${JSON.stringify(h.movies?.mood || null)}`);
+    });
+    
+    // Flatten all moods from the history and remove duplicates
+    const allMoods = history
+      .flatMap((h: any) => h.movies?.mood || [])
+      .filter((m: string) => m); // Filter out null/undefined/empty
+    
+    const uniqueMoods = [...new Set(allMoods)];
+
+    console.log('User recent moods (unique):', uniqueMoods);
+
+    if (uniqueMoods.length === 0) {
+      // If no moods found in history, fallback to random (excluding watched)
+      console.log('No moods found, returning random movies');
+      return c.json(await getRandomMovies(10, allWatchedIds));
+    }
+
+    // 3. Find similar movies based on Mood Tags
+    // We look for movies that have at least one of the mood tags
+    // And exclude movies the user has already watched
+    console.log('Searching for movies with moods:', uniqueMoods);
+    let query = supabase
+      .from('movies')
+      .select('*')
+      .overlaps('mood', uniqueMoods); // Requires 'mood' column to be TEXT[]
+      
+    // Exclude watched movies if any
+    if (allWatchedIds.length > 0) {
+      // Format for PostgREST: ("id1","id2","id3")
+      const formattedIds = `(${allWatchedIds.map(id => `"${id}"`).join(',')})`;
+      query = query.not('id', 'in', formattedIds);
+    }
+      
+    const { data: recommendations, error: recError } = await query.limit(10);
+
+    if (recError) {
+      console.error('Recommendation search error:', recError);
+      // Fallback to random only on error
+      return c.json(await getRandomMovies(10, allWatchedIds));
+    }
+    
+    console.log(`Found ${recommendations?.length || 0} movies matching mood tags`);
+    
+    // If recommendations are empty (e.g. watched all matching mood movies), fallback to random
+    if (!recommendations || recommendations.length === 0) {
+       console.log('No mood-matched movies found, returning random movies');
+       return c.json(await getRandomMovies(10, allWatchedIds));
+    }
+
+    return c.json(recommendations);
+  } catch (error: any) {
+    console.error('Recommendation error:', error);
+    return c.text(error.message || 'Failed to generate recommendations', 500);
+  }
+});
+
 // Health check
-app.get('/make-server-0c50a72d/health', (c) => {
+app.get('/make-server/health', (c) => {
   return c.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 

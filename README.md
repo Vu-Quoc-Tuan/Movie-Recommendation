@@ -39,7 +39,7 @@ npm run dev
 ### 1. Deploy Deno functions lên Supabase
 
 ```bash
-supabase functions deploy make-server-0c50a72d
+supabase functions deploy make-server --no-verify-jwt
 ```
 
 ### 2. Build frontend (sử dụng biến môi trường trong `.env.production`)

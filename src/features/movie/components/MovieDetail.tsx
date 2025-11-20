@@ -6,6 +6,7 @@ import { publicAnonKey } from '../../../lib/supabase/info';
 import html2canvas from 'html2canvas';
 import { getApiEndpoint } from '../../../lib/api/apiClient';
 import {Movie} from "../types/movie.types";
+import { addToHistory } from '../api/movieApi';
 
 interface MovieDetailProps {
   movie: Movie;
@@ -15,7 +16,9 @@ interface MovieDetailProps {
 export function MovieDetail({ movie, onClose }: MovieDetailProps) {
   const [saved, setSaved] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const trailerRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
 
   const handleSave = async () => {
@@ -46,10 +49,19 @@ export function MovieDetail({ movie, onClose }: MovieDetailProps) {
     }
   };
 
-  const handleDecide = async (platform: string) => {
+  const handleDecide = async (platform?: string) => {
+    // 1. Save to History (Priority)
+    try {
+      await addToHistory(movie.id);
+    } catch (error) {
+      console.error('Error saving history:', error);
+      // Continue execution even if save fails
+    }
+
+    // 2. Log analytics (Optional)
     try {
       const token = getAuthToken() || publicAnonKey;
-      await fetch(
+      fetch(
         getApiEndpoint('/log/decide'),
         {
           method: 'POST',
@@ -57,13 +69,19 @@ export function MovieDetail({ movie, onClose }: MovieDetailProps) {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ movie_id: movie.id, platform }),
+          body: JSON.stringify({ movie_id: movie.id, platform: platform || 'Trailer' }),
         }
-      );
+      ).catch(err => console.warn('Analytics log failed', err));
+    } catch (e) {
+      // Ignore analytics errors
+    }
 
-      window.open(movie.whereToWatch[platform], '_blank');
-    } catch (error) {
-      console.error('Decide log error:', error);
+    // 3. Play Trailer
+    if (trailerRef.current) {
+      trailerRef.current.scrollIntoView({ behavior: 'smooth' });
+      setIsPlaying(true);
+    } else {
+      alert('Trailer không khả dụng cho phim này.');
     }
   };
 
@@ -240,13 +258,13 @@ export function MovieDetail({ movie, onClose }: MovieDetailProps) {
             </div>
 
             {/* Trailer */}
-            <div className="mb-6">
+            <div className="mb-6" ref={trailerRef}>
               <h2 className="text-xl mb-3">Trailer</h2>
               <div className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-xl overflow-hidden">
                 <iframe
                   width="100%"
                   height="100%"
-                  src={`https://www.youtube.com/embed/${movie.trailerYoutubeId}`}
+                  src={`https://www.youtube.com/embed/${movie.trailerYoutubeId}${isPlaying ? '?autoplay=1' : ''}`}
                   title="YouTube video player"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -297,16 +315,8 @@ export function MovieDetail({ movie, onClose }: MovieDetailProps) {
         {/* FOOTER */}
         <div className="flex justify-end p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <button
-            onClick={() => {
-              const firstPlatform = Object.keys(movie.whereToWatch || {})[0];
-              if (firstPlatform) {
-                handleDecide(firstPlatform);
-              } else {
-                alert('Thông tin xem phim chưa được cập nhật');
-              }
-            }}
-            className="w-full py-4 px-9 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all text-lg disabled:opacity-50"
-            disabled={!movie.whereToWatch || Object.keys(movie.whereToWatch).length === 0}
+            onClick={() => handleDecide()}
+            className="w-full py-4 px-9 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all text-lg cursor-pointer active:scale-95"
           >
             Chốt xem ngay
           </button>

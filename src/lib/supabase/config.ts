@@ -13,7 +13,7 @@ export const SUPABASE_PUBLIC_ANON_KEY = publicAnonKey;
 export const SUPABASE_URL = `https://${projectId}.supabase.co`;
 
 // Edge function configuration
-export const SUPABASE_FUNCTION_NAME = 'make-server-0c50a72d';
+export const SUPABASE_FUNCTION_NAME = 'make-server';
 
 /**
  * Builds a complete URL for Supabase Edge Functions

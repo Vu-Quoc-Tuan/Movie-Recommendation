@@ -16,10 +16,11 @@ async function runMigration() {
   const migrationsDir = path.join(__dirname, 'migrations');
   const migrationFiles = [
     '001_create_movies_table.sql',
-    '002_create_kv_store.sql'
-  ];
-
-  try {
+    '002_create_kv_store.sql',
+    '003_create_users_and_history.sql',
+  '004_enable_vector_and_rpc.sql',
+  '005_add_mood_to_movies.sql'
+];  try {
     const pgUrl = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
 
     for (const filename of migrationFiles) {
@@ -33,12 +34,42 @@ async function runMigration() {
       console.log(`\n📄 Processing migration: ${filename}`);
       const sql = fs.readFileSync(migrationFile, 'utf-8');
 
-      const statements = sql
-        .split(';')
-        .map(s => s.trim())
-        .filter(s => s.length > 0 && !s.startsWith('--'));
+      // Improved SQL splitter that respects dollar quotes
+      const mergedStatements = [];
+      let currentStatement = '';
+      let inDollarQuote = false;
+      
+      // Simple character-by-character parser
+      for (let i = 0; i < sql.length; i++) {
+        const char = sql[i];
+        const nextChar = sql[i + 1];
+        
+        // Check for dollar quote start/end
+        if (char === '$' && nextChar === '$') {
+          inDollarQuote = !inDollarQuote;
+          currentStatement += '$$';
+          i++; // Skip next char
+          continue;
+        }
+        
+        if (char === ';' && !inDollarQuote) {
+          if (currentStatement.trim()) {
+            mergedStatements.push(currentStatement.trim());
+          }
+          currentStatement = '';
+        } else {
+          currentStatement += char;
+        }
+      }
+      
+      if (currentStatement.trim()) {
+        mergedStatements.push(currentStatement.trim());
+      }
 
-      console.log(`Found ${statements.length} SQL statements\n`);
+      // Filter out comments if they are the only thing in the statement
+      const finalStatements = mergedStatements.filter(s => !s.startsWith('--') && s.length > 0);
+
+      console.log(`Found ${mergedStatements.length} SQL statements\n`);
 
       if (pgUrl) {
         console.log('Using direct Postgres connection...');
@@ -46,9 +77,9 @@ async function runMigration() {
         await client.connect();
 
         try {
-          for (let i = 0; i < statements.length; i++) {
-            const statement = statements[i];
-            console.log(`Executing statement ${i + 1}/${statements.length}...`);
+          for (let i = 0; i < mergedStatements.length; i++) {
+            const statement = mergedStatements[i];
+            console.log(`Executing statement ${i + 1}/${mergedStatements.length}...`);
             try {
               await client.query(statement);
               console.log('✓ Statement executed successfully');
