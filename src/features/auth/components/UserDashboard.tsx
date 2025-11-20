@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Clock, Bookmark, Image as ImageIcon, TrendingUp, Settings } from 'lucide-react';
+import { Clock, Bookmark, Image as ImageIcon, TrendingUp, Settings, Trash2 } from 'lucide-react';
 import { useAuth, getAuthToken } from './AuthContext';
 import { ImageWithFallback } from '../../../components/shared/ImageWithFallback';
-import { getApiEndpoint } from '../../../lib/api/apiClient';
+import { fetchUserHistory, fetchUserSaved, deleteMovieHistory } from '../api';
 
 export function UserDashboard() {
   const [activeTab, setActiveTab] = useState('history');
@@ -21,21 +21,18 @@ export function UserDashboard() {
     setLoading(true);
     try {
       const token = getAuthToken();
-      const endpoint = activeTab === 'history' ? 'history' : 'saved';
-      const response = await fetch(
-        getApiEndpoint(`/user/${endpoint}`),
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      if (!token) {
+        console.error('No auth token found');
+        return;
+      }
 
-      if (response.ok) {
-        const data = await response.json();
-        if (activeTab === 'history') {
-          setHistory(data);
-        } else {
-          setSaved(data);
-        }
+      if (activeTab === 'history') {
+        const historyData = await fetchUserHistory(token);
+        console.log(historyData)
+        setHistory(historyData);
+      } else if (activeTab === 'saved') {
+        const savedData = await fetchUserSaved(token);
+        setSaved(savedData);
       }
     } catch (error) {
       console.error('Load data error:', error);
@@ -68,8 +65,8 @@ export function UserDashboard() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg whitespace-nowrap transition-all ${activeTab === tab.id
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
             >
               <Icon className="w-4 h-4" />
@@ -96,11 +93,21 @@ export function UserDashboard() {
 }
 
 function HistoryTab({ history, loading }: any) {
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const { user } = useAuth();
+
   if (loading) {
     return <div className="text-center py-8">Đang tải...</div>;
   }
 
-  if (history.length === 0) {
+  // Loại bỏ bản ghi trùng lặp - giữ lần xem gần nhất của mỗi bộ phim
+  const uniqueHistory = Array.from(
+    new Map(
+      history.map((item: any) => [item.movie_id, item])
+    ).values()
+  );
+
+  if (uniqueHistory.length === 0) {
     return (
       <div className="text-center py-12">
         <Clock className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
@@ -113,23 +120,35 @@ function HistoryTab({ history, loading }: any) {
     <div>
       <h2 className="text-xl mb-4">Lịch sử xem gần đây</h2>
       <div className="space-y-3">
-        {history.map((item: any) => (
+        {uniqueHistory.map((item: any) => (
           <div
             key={item.id}
             className="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             <div className="w-16 h-24 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden flex-shrink-0">
               <ImageWithFallback
-                src={item.poster || 'https://images.unsplash.com/photo-1655367574486-f63675dd69eb?w=200'}
-                alt={item.title}
+                src={item.movies?.poster_url || item.poster || 'https://images.unsplash.com/photo-1655367574486-f63675dd69eb?w=200'}
+                alt={item.movies?.title || item.title || 'Movie'}
                 className="w-full h-full object-cover"
               />
             </div>
             <div className="flex-1">
-              <h3 className="mb-1">{item.title || 'Movie Title'}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {new Date(item.created_at).toLocaleDateString('vi-VN')}
-              </p>
+              <h3 className="mb-1 font-bold">{item.movies?.title || item.title || 'Movie Title'}</h3>
+              <div className="flex items-center space-x-2 mb-2">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <span className="text-white font-semibold">Ngày xem: </span>{new Date(item.watched_at).toLocaleDateString('vi-VN')}
+                </p>
+                {item.movies?.year && (
+                  <span className="text-sm text-gray-500 dark:text-gray-400">• {item.movies.year}</span>
+                )}
+              </div>
+              {item.mood_tag && (
+                <div className="inline-block">
+                  <span className="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full">
+                    {item.mood_tag.charAt(0).toUpperCase() + item.mood_tag.slice(1)}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         ))}
