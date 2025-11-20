@@ -3,6 +3,7 @@
       "version": "0.1.0",
       "private": true,
       "dependencies": {
+            "@google/genai": "^1.30.0",
             "@jsr/supabase__supabase-js": "2.49.8",
             "@radix-ui/react-accordion": "1.2.3",
             "@radix-ui/react-alert-dialog": "1.1.6",
@@ -54,7 +55,7 @@
             "vaul": "1.1.2"
       },
       "devDependencies": {
-            "@types/node": "20.10.0",
+            "@types/node": "^20.10.0",
             "@vitejs/plugin-react-swc": "3.10.2",
             "vite": "^6.4.1"
       },
