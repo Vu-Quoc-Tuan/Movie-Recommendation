@@ -13,7 +13,8 @@ npm i
 ### 2. Lấy dữ liệu phim từ database
 
 ```bash
-cd D:\Coding\github\Movie-Recommendation\supabase
+cd D:\Coding\github\Movie-Recommendation\supabase 
+#or cd supabase
 npx tsx seed/movies.ts
 ```
 
@@ -21,7 +22,8 @@ npx tsx seed/movies.ts
 
 ```bash
 cd D:\Coding\github\Movie-Recommendation
-deno run -A src/supabase/functions/server/index.tsx
+#or cd ../
+deno run -A server/functions/make-server/index.tsx
 ```
 
 ### 4. Chạy frontend
@@ -37,7 +39,7 @@ npm run dev
 ### 1. Deploy Deno functions lên Supabase
 
 ```bash
-supabase functions deploy make-server-0c50a72d
+supabase functions deploy make-server --no-verify-jwt
 ```
 
 ### 2. Build frontend (sử dụng biến môi trường trong `.env.production`)
