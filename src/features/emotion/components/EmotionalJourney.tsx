@@ -4,6 +4,15 @@ import { EmotionSpectrum } from './EmotionSpectrum';
 import { ImageWithFallback } from '../../../components/shared/ImageWithFallback';
 import {analyzeEmotionalJourney} from "../api/emotionApi";
 
+// Helper function to generate random spectrum values
+function generateRandomSpectrum() {
+  return {
+    calm: Math.floor(Math.random() * 101),
+    warm: Math.floor(Math.random() * 101),
+    hopeful: Math.floor(Math.random() * 101),
+  };
+}
+
 const moods = [
   { value: 'anxious', label: '😰 Lo lắng', color: 'bg-red-100 dark:bg-red-900/20' },
   { value: 'sad', label: '😢 Buồn', color: 'bg-blue-100 dark:bg-blue-900/20' },
@@ -31,7 +40,7 @@ const journeyResults = {
     poster: 'https://images.unsplash.com/photo-1655367574486-f63675dd69eb?w=400',
     vignette: 'Một người phụ nữ bình thường khám phá vô số vũ trụ song song, mang theo cảm xúc hỗn loạn nhưng đầy màu sắc. Hành trình giải phóng cảm xúc qua những tình huống phi thường.',
     quote: 'Trong vô vàn vũ trụ, tôi chọn yêu bạn.',
-    spectrum: { calm: 20, warm: 60, hopeful: 70, nostalgic: 30, bittersweet: 40, intense: 90 },
+    spectrum: generateRandomSpectrum(),
   },
   reflect: {
     title: 'The Farewell',
@@ -39,7 +48,7 @@ const journeyResults = {
     poster: 'https://images.unsplash.com/photo-1677741446873-bd348677e530?w=400',
     vignette: 'Một gia đình Trung Quốc tổ chức đám cưới giả để tạm biệt bà nội đang mắc bệnh. Khoảnh khắc suy ngẫm về gia đình, sự dối trá tử tế, và tình yêu thương.',
     quote: 'Đôi khi, tình yêu là giữ bí mật.',
-    spectrum: { calm: 40, warm: 80, hopeful: 50, nostalgic: 85, bittersweet: 90, intense: 30 },
+    spectrum: generateRandomSpectrum(),
   },
   rebuild: {
     title: 'Little Miss Sunshine',
@@ -47,7 +56,7 @@ const journeyResults = {
     poster: 'https://images.unsplash.com/photo-1588852112013-6b63362bc583?w=400',
     vignette: 'Một gia đình rối loạn cùng nhau lên đường đưa cô con gái nhỏ đến cuộc thi sắc đẹp. Hài hước, ấm áp, và đầy hy vọng về sức mạnh của sự đoàn kết.',
     quote: 'Chúng ta không thất bại, chỉ là chưa thắng.',
-    spectrum: { calm: 60, warm: 90, hopeful: 95, nostalgic: 50, bittersweet: 30, intense: 20 },
+    spectrum: generateRandomSpectrum(),
   },
 };
 
@@ -175,8 +184,8 @@ export function EmotionalJourney() {
             <button
               onClick={() => setMode('buttons')}
               className={`px-6 py-2 rounded-lg transition-all ${mode === 'buttons'
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                 }`}
             >
               Chọn mood
@@ -184,8 +193,8 @@ export function EmotionalJourney() {
             <button
               onClick={() => setMode('text')}
               className={`px-6 py-2 rounded-lg transition-all flex items-center space-x-2 ${mode === 'text'
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                 }`}
             >
               <Sparkles className="w-4 h-4" />
@@ -206,8 +215,8 @@ export function EmotionalJourney() {
                       key={mood.value}
                       onClick={() => setMoodNow(mood.value)}
                       className={`p-4 rounded-xl transition-all text-left ${moodNow === mood.value
-                          ? 'ring-2 ring-purple-500 shadow-lg scale-105'
-                          : 'hover:scale-105'
+                        ? 'ring-2 ring-purple-500 shadow-lg scale-105'
+                        : 'hover:scale-105'
                         } ${mood.color}`}
                     >
                       <div>{mood.label}</div>
@@ -227,8 +236,8 @@ export function EmotionalJourney() {
                       key={mood.value}
                       onClick={() => setMoodTarget(mood.value)}
                       className={`p-4 bg-white dark:bg-gray-800 rounded-xl transition-all text-left hover:scale-105 ${moodTarget === mood.value
-                          ? 'ring-2 ring-purple-500 shadow-lg scale-105'
-                          : ''
+                        ? 'ring-2 ring-purple-500 shadow-lg scale-105'
+                        : ''
                         }`}
                     >
                       <div>{mood.label}</div>
@@ -321,7 +330,7 @@ function JourneyCard({ step, stepNumber, description, movie, color }: any) {
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{movie.year}</p>
 
         <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 mb-3">
-          <EmotionSpectrum spectrum={movie.spectrum} mini />
+          <EmotionSpectrum spectrum={movie.spectrum} />
         </div>
 
         <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 italic">

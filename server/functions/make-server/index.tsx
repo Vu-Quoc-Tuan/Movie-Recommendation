@@ -64,7 +64,7 @@ async function ensureUserInPublicTable(userId: string) {
     // 2. If not, fetch from KV
     const email = await kv.get(`user:id:${userId}`);
     if (!email) return;
-    
+
     const user = await kv.get(`user:${email}`);
     if (!user) return;
 
@@ -76,7 +76,7 @@ async function ensureUserInPublicTable(userId: string) {
       name: user.name,
       created_at: user.createdAt || new Date().toISOString()
     });
-    
+
     if (error) {
       console.warn('Warning: Could not sync user to public.users table:', error.message);
     } else {
@@ -289,28 +289,47 @@ app.get('/make-server/user/history', async (c) => {
       return c.text('Unauthorized', 401);
     }
 
-    // Query Supabase
-    const { data, error } = await supabase
+    // Query user_history
+    const { data: historyData, error: historyError } = await supabase
       .from('user_history')
-      .select(`
-        movie_id,
-        watched_at,
-        movies (
-          title,
-          genre,
-          movie_overview
-        )
-      `)
+      .select('id, movie_id, watched_at, mood_tag')
       .eq('user_id', userId)
       .order('watched_at', { ascending: false })
-      .limit(10);
+      .limit(50);
 
-    if (error) {
-      console.error('Supabase history error:', error);
-      throw error;
+    if (historyError) {
+      console.error('Supabase history error:', historyError);
+      throw historyError;
     }
 
-    return c.json(data || []);
+    if (!historyData || historyData.length === 0) {
+      return c.json([]);
+    }
+
+    // Extract movie IDs
+    const movieIds = historyData.map((item: any) => item.movie_id);
+
+    // Query movies by IDs
+    const { data: moviesData, error: moviesError } = await supabase
+      .from('movies')
+      .select('id, title, year, genre, poster_url, movie_overview')
+      .in('id', movieIds);
+
+    if (moviesError) {
+      console.error('Supabase movies error:', moviesError);
+      throw moviesError;
+    }
+
+    // Merge data
+    const result = historyData.map((historyItem: any) => {
+      const movie = moviesData?.find((m: any) => m.id === historyItem.movie_id);
+      return {
+        ...historyItem,
+        movies: movie || null,
+      };
+    });
+
+    return c.json(result);
   } catch (error: any) {
     console.error('Get history error:', error);
     return c.text(error.message || 'Failed to get history', 500);
@@ -478,10 +497,10 @@ app.post('/make-server/party-suggest', async (c) => {
 async function analyzeMoodText(text: string): Promise<any> {
   // This is a mock implementation. Replace with actual AI API call.
   // For production, integrate with HyperCLOVA X or OpenAI API
-  
+
   // Simple keyword-based analysis for demo
   const lowerText = text.toLowerCase();
-  
+
   let detectedMood = {
     primary: 'neutral',
     emotions: [] as string[],
@@ -732,7 +751,7 @@ app.post('/make-server/recommend/personal', async (c) => {
       .from('user_history')
       .select('movie_id')
       .eq('user_id', userId);
-      
+
     const allWatchedIds = allWatched ? allWatched.map((h: any) => h.movie_id) : [];
     console.log(`User ${userId} has watched ${allWatchedIds.length} movies.`);
     console.log('Watched IDs to exclude:', allWatchedIds);
@@ -765,12 +784,12 @@ app.post('/make-server/recommend/personal', async (c) => {
     history.forEach((h: any, index: number) => {
       console.log(`  ${index + 1}. Movie ID: ${h.movie_id}, Mood: ${JSON.stringify(h.movies?.mood || null)}`);
     });
-    
+
     // Flatten all moods from the history and remove duplicates
     const allMoods = history
       .flatMap((h: any) => h.movies?.mood || [])
       .filter((m: string) => m); // Filter out null/undefined/empty
-    
+
     const uniqueMoods = [...new Set(allMoods)];
 
     console.log('User recent moods (unique):', uniqueMoods);
@@ -789,14 +808,14 @@ app.post('/make-server/recommend/personal', async (c) => {
       .from('movies')
       .select('*')
       .overlaps('mood', uniqueMoods); // Requires 'mood' column to be TEXT[]
-      
+
     // Exclude watched movies if any
     if (allWatchedIds.length > 0) {
       // Format for PostgREST: ("id1","id2","id3")
       const formattedIds = `(${allWatchedIds.map(id => `"${id}"`).join(',')})`;
       query = query.not('id', 'in', formattedIds);
     }
-      
+
     const { data: recommendations, error: recError } = await query.limit(10);
 
     if (recError) {
@@ -804,13 +823,13 @@ app.post('/make-server/recommend/personal', async (c) => {
       // Fallback to random only on error
       return c.json(await getRandomMovies(10, allWatchedIds));
     }
-    
+
     console.log(`Found ${recommendations?.length || 0} movies matching mood tags`);
-    
+
     // If recommendations are empty (e.g. watched all matching mood movies), fallback to random
     if (!recommendations || recommendations.length === 0) {
-       console.log('No mood-matched movies found, returning random movies');
-       return c.json(await getRandomMovies(10, allWatchedIds));
+      console.log('No mood-matched movies found, returning random movies');
+      return c.json(await getRandomMovies(10, allWatchedIds));
     }
 
     return c.json(recommendations);
