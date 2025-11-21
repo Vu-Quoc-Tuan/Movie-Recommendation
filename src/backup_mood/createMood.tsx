@@ -1,14 +1,13 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
-import callllm from './call_llm';
+import callllm from './api/call_llm';
 
-// ================== CONFIG ==================
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-const BATCH_SIZE = 200;  // Giảm xuống 3
-const SLEEP_MS = 8000;  // Tăng lên 8s (60s / 10 requests = 6s + buffer)
-const MAX_RETRIES = 5;  // Tăng lên 5 lần retry
+const BATCH_SIZE = 200;
+const SLEEP_MS = 8000; 
+const MAX_RETRIES = 5; 
 
 // ================== SUPABASE CLIENT ==================
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -26,7 +25,6 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const getDescription = (movie: MovieRow): string => {
   if (movie.movie_overview) {
-    // Giới hạn overview ở 500 ký tự để tránh quá dài
     return movie.movie_overview.slice(0, 500);
   }
   if ((movie as any).description) {
@@ -41,7 +39,7 @@ const getGenreText = (genre: MovieRow['genre']): string => {
   return '';
 };
 
-async function getMoodFromLLM(movie: MovieRow, retries = 0): Promise<string[] | null> {  // Đổi return type thành string[]
+async function getMoodFromLLM(movie: MovieRow, retries = 0): Promise<string[] | null> {
   const genresText = getGenreText(movie.genre);
   const description = getDescription(movie);
 
@@ -60,7 +58,6 @@ Description: ${description}`;
     if (!res.ok) {
       const errorText = await res.text();
       
-      // Check if 429 quota error
       if (res.status === 500 && errorText.includes('429')) {
         if (retries < MAX_RETRIES) {
           console.warn(`⏳ Quota exceeded. Retry ${retries + 1}/${MAX_RETRIES} after 20s...`);
@@ -98,8 +95,7 @@ Description: ${description}`;
       return null;
     }
 
-    // Trả về array thay vì join string
-    return top3;  // ["dark", "scary", "sad"]
+    return top3;
   } catch (err: any) {
     if (err.message?.includes('429') && retries < MAX_RETRIES) {
       console.warn(`⏳ Quota exceeded. Retry ${retries + 1}/${MAX_RETRIES} after 20s...`);
@@ -111,11 +107,10 @@ Description: ${description}`;
   }
 }
 
-// Cập nhật function update để nhận array
-async function updateMovieMood(movieId: number, mood: string[]) {  // Đổi type thành string[]
+async function updateMovieMood(movieId: number, mood: string[]) {
   const { error } = await supabase
     .from('movies')
-    .update({ mood })  // Supabase tự convert array sang PostgreSQL array
+    .update({ mood })
     .eq('id', movieId);
 
   if (error) {

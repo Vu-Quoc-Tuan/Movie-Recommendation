@@ -8,6 +8,8 @@ import * as kv from './kv_store.tsx';
 import * as bcrypt from 'npm:bcryptjs';
 import * as jose from 'npm:jose';
 
+import charactorAnalyze from "../../../src/lib/api/aiAnalysis.ts";
+
 const app = new Hono();
 
 // Middleware
@@ -695,7 +697,8 @@ app.post('/make-server/analyze-character-match', async (c) => {
     console.log('Analyzing character match from text:', moodText.substring(0, 100));
 
     // Analyze mood
-    const analysis = await analyzeMoodText(moodText);
+    const analysis = await charactorAnalyze(moodText);
+    console.log('Character match mood analysis:', analysis);
 
     // Generate character match (this would ideally use a more sophisticated AI)
     let match = {

@@ -15,6 +15,7 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@google/genai@^1.30.0",
         "npm:@jsr/supabase__supabase-js@2.49.8",
         "npm:@radix-ui/react-accordion@1.2.3",
         "npm:@radix-ui/react-alert-dialog@1.1.6",
@@ -43,7 +44,7 @@
         "npm:@radix-ui/react-toggle@1.1.2",
         "npm:@radix-ui/react-tooltip@1.1.8",
         "npm:@supabase/supabase-js@2",
-        "npm:@types/node@20.10.0",
+        "npm:@types/node@^20.10.0",
         "npm:@vitejs/plugin-react-swc@3.10.2",
         "npm:bcryptjs@*",
         "npm:class-variance-authority@0.7.1",
@@ -65,6 +66,7 @@
         "npm:recharts@2.15.2",
         "npm:sonner@2.0.3",
         "npm:tailwind-merge@*",
+        "npm:tsx@^4.20.6",
         "npm:vaul@1.1.2",
         "npm:vite@^6.4.1"
       ]

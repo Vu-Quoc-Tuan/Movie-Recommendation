@@ -58,6 +58,7 @@
       "devDependencies": {
             "@types/node": "^20.10.0",
             "@vitejs/plugin-react-swc": "3.10.2",
+            "tsx": "^4.20.6",
             "vite": "^6.4.1"
       },
       "scripts": {
@@ -65,6 +66,8 @@
             "build": "vite build",
             "migrate": "npm --prefix supabase run migrate",
             "migrate:setup": "npm --prefix supabase run setup",
-            "seed": "npm --prefix supabase run seed"
+            "seed": "npm --prefix supabase run seed",
+            "create-mood": "tsx src/backup_mood/createMood.tsx",
+            "create-embedding": "tsx src/backup_mood/createEmbedding.tsx"
       }
 }
