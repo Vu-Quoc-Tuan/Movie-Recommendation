@@ -6,7 +6,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { SUPABASE_URL, SUPABASE_PUBLIC_ANON_KEY } from './config';
+import { SUPABASE_URL, SUPABASE_PUBLIC_ANON_KEY } from './config.ts';
 
 if (!SUPABASE_URL) {
     throw new Error('SUPABASE_URL is not configured. Check your Supabase project settings.');

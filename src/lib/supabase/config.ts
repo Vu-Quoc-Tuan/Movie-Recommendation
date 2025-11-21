@@ -5,7 +5,7 @@
  * helper functions for building URLs and headers dynamically.
  */
 
-import { projectId, publicAnonKey } from './info';
+import { projectId, publicAnonKey } from './info.ts';
 
 // Export core configuration
 export const SUPABASE_PROJECT_ID = projectId;
