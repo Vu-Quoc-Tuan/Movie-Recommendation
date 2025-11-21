@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ArrowRight, Heart, Sparkles, Loader2 } from 'lucide-react';
 import { EmotionSpectrum } from './EmotionSpectrum';
 import { ImageWithFallback } from '../../../components/shared/ImageWithFallback';
-import {analyzeEmotionalJourney} from "../api/emotionApi";
+import { analyzeEmotionalJourney } from "../api/emotionApi";
 
 // Helper function to generate random spectrum values
 function generateRandomSpectrum() {
@@ -69,9 +69,27 @@ export function EmotionalJourney() {
   const [showResults, setShowResults] = useState(false);
   const [aiResults, setAiResults] = useState<any>(null);
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if (moodNow && moodTarget) {
-      setShowResults(true);
+      setLoading(true);
+      try {
+        const data = await analyzeEmotionalJourney(moodNow + moodTarget);
+
+        // Gán spectrum random vào từng step nếu chưa có
+        const aiWithSpectrum = {
+          release: { ...data.release, spectrum: generateRandomSpectrum() },
+          reflect: { ...data.reflect, spectrum: generateRandomSpectrum() },
+          rebuild: { ...data.rebuild, spectrum: generateRandomSpectrum() },
+        };
+
+        setAiResults(aiWithSpectrum);
+        setShowResults(true);
+      } catch (error) {
+        console.error('Error analyzing emotional journey:', error);
+        alert('Đã có lỗi xảy ra. Vui lòng thử lại!');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -81,7 +99,14 @@ export function EmotionalJourney() {
     setLoading(true);
     try {
       const data = await analyzeEmotionalJourney(moodText);
-      setAiResults(data);
+
+      const aiWithSpectrum = {
+        release: { ...data.release, spectrum: generateRandomSpectrum() },
+        reflect: { ...data.reflect, spectrum: generateRandomSpectrum() },
+        rebuild: { ...data.rebuild, spectrum: generateRandomSpectrum() },
+      };
+
+      setAiResults(aiWithSpectrum);
       setShowResults(true);
     } catch (error) {
       console.error('Error analyzing emotional journey:', error);
@@ -249,10 +274,20 @@ export function EmotionalJourney() {
               {/* Start Button */}
               <button
                 onClick={handleStart}
-                disabled={!moodNow || !moodTarget}
-                className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+                disabled={!moodNow || !moodTarget || loading}
+                className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg flex items-center justify-center space-x-2"
               >
-                Bắt đầu hành trình
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Đang phân tích...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-5 h-5" />
+                    <span>Phân tích & Tạo liệu trình</span>
+                  </>
+                )}
               </button>
             </>
           ) : (
@@ -305,42 +340,64 @@ export function EmotionalJourney() {
 }
 
 function JourneyCard({ step, stepNumber, description, movie, color }: any) {
+  if (!movie) return null;
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+      {/* Header với step và description */}
       <div className={`bg-gradient-to-r ${color} p-4 text-white`}>
         <div className="flex items-center space-x-3 mb-2">
-          <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+          <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center font-bold">
             {stepNumber}
           </div>
-          <h3 className="text-xl">{step}</h3>
+          <h3 className="text-xl font-semibold">{step}</h3>
         </div>
         <p className="text-sm text-white/90">{description}</p>
       </div>
 
+      {/* Poster */}
       <div className="p-4">
-        <div className="relative h-48 rounded-lg overflow-hidden mb-4">
-          <ImageWithFallback
-            src={movie.poster}
+        <div className="relative h-48 rounded-lg overflow-hidden mb-4 shadow-sm">
+          <img
+            src={movie.poster_url}
             alt={movie.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover object-center"
           />
+          {/* Mood badges */}
+          {movie.mood && movie.mood.length > 0 && (
+            <div className="absolute top-2 left-2 flex flex-wrap gap-1">
+              {movie.mood.map((m: string) => (
+                <span
+                  key={m}
+                  className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full backdrop-blur-sm"
+                >
+                  {m}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
-        <h4 className="mb-1">{movie.title}</h4>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{movie.year}</p>
+        {/* Title & Year */}
+        <h4 className="text-lg font-semibold mb-1">{movie.title}</h4>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{movie.year}</p>
 
-        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 mb-3">
-          <EmotionSpectrum spectrum={movie.spectrum} />
-        </div>
+        {/* Spectrum */}
+        {movie.spectrum && (
+          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 mb-3">
+            <EmotionSpectrum spectrum={movie.spectrum} />
+          </div>
+        )}
 
-        <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 italic">
-          "{movie.vignette}"
-        </p>
-
-        <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg p-3 border-l-2 border-purple-500">
-          <p className="text-sm italic">"{movie.quote}"</p>
-        </div>
+        {/* Overview */}
+        {movie.movie_overview && movie.movie_overview !== "Chưa có mô tả" && (
+          <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg p-3 border-l-2 border-purple-500">
+            <p className="text-sm italic">{movie.movie_overview}</p>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
+
