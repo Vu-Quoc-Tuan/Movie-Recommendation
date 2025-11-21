@@ -3,6 +3,8 @@ import { Clock, Bookmark, Image as ImageIcon, TrendingUp, Settings, Trash2 } fro
 import { useAuth, getAuthToken } from './AuthContext';
 import { ImageWithFallback } from '../../../components/shared/ImageWithFallback';
 import { fetchUserHistory, fetchUserSaved, deleteMovieHistory } from '../api';
+import type { PopconfirmProps } from 'antd';
+import { message, Popconfirm } from 'antd';
 
 export function UserDashboard() {
   const [activeTab, setActiveTab] = useState('history');
@@ -28,7 +30,6 @@ export function UserDashboard() {
 
       if (activeTab === 'history') {
         const historyData = await fetchUserHistory(token);
-        console.log(historyData)
         setHistory(historyData);
       } else if (activeTab === 'saved') {
         const savedData = await fetchUserSaved(token);
@@ -79,7 +80,7 @@ export function UserDashboard() {
       {/* Content */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
         {activeTab === 'history' && (
-          <HistoryTab history={history} loading={loading} />
+          <HistoryTab history={history} setHistory={setHistory} loading={loading} />
         )}
         {activeTab === 'saved' && (
           <SavedTab saved={saved} loading={loading} />
@@ -92,7 +93,7 @@ export function UserDashboard() {
   );
 }
 
-function HistoryTab({ history, loading }: any) {
+function HistoryTab({ history, setHistory, loading }: any) {
   const [deleting, setDeleting] = useState<string | null>(null);
   const { user } = useAuth();
 
@@ -116,6 +117,30 @@ function HistoryTab({ history, loading }: any) {
     );
   }
 
+  const handleDeleteHistory = async (movieId: string, movieTitle: string) => {
+    setDeleting(movieId);
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        alert('Không tìm thấy token xác thực');
+        return;
+      }
+
+      await deleteMovieHistory(token, movieId);
+
+      // Xoá item khỏi state
+      const updatedHistory = history.filter((item: any) => item.movie_id !== movieId);
+      // Force re-render bằng cách load lại dữ liệu (trong thực tế bạn có thể optimize bằng callback)
+      setHistory(updatedHistory)
+
+    } catch (error) {
+      console.error('Error deleting history:', error);
+      alert('Có lỗi xảy ra khi xoá lịch sử');
+    } finally {
+      setDeleting(null);
+    }
+  };
+
   return (
     <div>
       <h2 className="text-xl mb-4">Lịch sử xem gần đây</h2>
@@ -123,33 +148,49 @@ function HistoryTab({ history, loading }: any) {
         {uniqueHistory.map((item: any) => (
           <div
             key={item.id}
-            className="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="relative flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             <div className="w-16 h-24 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden flex-shrink-0">
               <ImageWithFallback
-                src={item.movies?.poster_url || item.poster || 'https://images.unsplash.com/photo-1655367574486-f63675dd69eb?w=200'}
-                alt={item.movies?.title || item.title || 'Movie'}
+                src={item.movies?.poster_url || item.poster}
+                alt={item.movies?.title || item.title}
                 className="w-full h-full object-cover"
               />
             </div>
+
             <div className="flex-1">
-              <h3 className="mb-1 font-bold">{item.movies?.title || item.title || 'Movie Title'}</h3>
+              <h3 className="mb-1 font-bold">{item.movies?.title || item.title}</h3>
               <div className="flex items-center space-x-2 mb-2">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  <span className="text-white font-semibold">Ngày xem: </span>{new Date(item.watched_at).toLocaleDateString('vi-VN')}
+                  <span className="text-white font-semibold">Ngày xem: </span>
+                  {new Date(item.watched_at).toLocaleDateString('vi-VN')}
                 </p>
                 {item.movies?.year && (
                   <span className="text-sm text-gray-500 dark:text-gray-400">• {item.movies.year}</span>
                 )}
               </div>
-              {item.mood_tag && (
-                <div className="inline-block">
-                  <span className="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full">
-                    {item.mood_tag.charAt(0).toUpperCase() + item.mood_tag.slice(1)}
-                  </span>
-                </div>
-              )}
             </div>
+            <Popconfirm
+              title="Xoá lịch sử xem phim"
+              description="Bạn có chắc muốn xoá bộ phim này khỏi lịch sử?"
+              onConfirm={() =>
+                handleDeleteHistory(item.movie_id, item.movies?.title || item.title)}
+              okText="Có"
+              cancelText="Không"
+            >
+              <button
+                disabled={deleting === item.movie_id}
+                className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Xoá lịch sử xem phim này"
+              >
+                {deleting === item.movie_id ? (
+                  <div className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Trash2 className="w-5 h-5" />
+                )}
+              </button>
+            </Popconfirm>
+
           </div>
         ))}
       </div>
