@@ -292,7 +292,7 @@ app.get('/make-server/user/history', async (c) => {
     // Query user_history
     const { data: historyData, error: historyError } = await supabase
       .from('user_history')
-      .select('id, movie_id, watched_at, mood_tag')
+      .select('id, movie_id, watched_at')
       .eq('user_id', userId)
       .order('watched_at', { ascending: false })
       .limit(50);
@@ -375,6 +375,44 @@ app.post('/make-server/user/history', async (c) => {
   }
 });
 
+// Delete history for a specific movie
+app.delete('/make-server/user/history/:movie_id', async (c) => {
+  try {
+    const token = c.req.header('Authorization')?.split(' ')[1];
+    if (!token) {
+      return c.text('Unauthorized', 401);
+    }
+
+    const userId = await verifyToken(token);
+    if (!userId) {
+      return c.text('Unauthorized', 401);
+    }
+
+    const movieId = c.req.param('movie_id');
+    if (!movieId) {
+      return c.text('Movie ID is required', 400);
+    }
+
+    // Delete all history records for this user and movie
+    const { error } = await supabase
+      .from('user_history')
+      .delete()
+      .eq('user_id', userId)
+      .eq('movie_id', movieId);
+
+    if (error) {
+      console.error('Supabase delete error:', error);
+      throw error;
+    }
+
+    console.log('History deleted:', { userId, movieId });
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('Delete history error:', error);
+    return c.text(error.message || 'Failed to delete history', 500);
+  }
+});
+
 // ===== LOGGING ROUTES =====
 
 // Log decide (movie watch decision)
@@ -437,38 +475,6 @@ app.post('/make-server/log/detail', async (c) => {
   }
 });
 
-// ===== EMOTIONAL JOURNEY =====
-
-app.post('/make-server/emotional-journey', async (c) => {
-  try {
-    const { mood_now, mood_target } = await c.req.json();
-
-    // This would normally call an LLM for personalized recommendations
-    // For now, return mock data
-    const journey = {
-      release: {
-        title: 'Everything Everywhere All at Once',
-        reason: 'Giải phóng cảm xúc qua hành động và màu sắc',
-      },
-      reflect: {
-        title: 'The Farewell',
-        reason: 'Suy ngẫm về gia đình và tình cảm',
-      },
-      rebuild: {
-        title: 'Little Miss Sunshine',
-        reason: 'Xây dựng lại niềm tin và hy vọng',
-      },
-    };
-
-    console.log('Emotional journey generated:', { mood_now, mood_target });
-
-    return c.json(journey);
-  } catch (error: any) {
-    console.error('Emotional journey error:', error);
-    return c.text(error.message || 'Failed to generate journey', 500);
-  }
-});
-
 // ===== PARTY MODE =====
 
 app.post('/make-server/party-suggest', async (c) => {
@@ -493,99 +499,125 @@ app.post('/make-server/party-suggest', async (c) => {
 
 // ===== AI ANALYSIS ROUTES =====
 
-// Helper: Mock AI analysis (replace with actual HyperCLOVA X or LLM API)
-async function analyzeMoodText(text: string): Promise<any> {
-  // This is a mock implementation. Replace with actual AI API call.
-  // For production, integrate with HyperCLOVA X or OpenAI API
+// ------ CLOVA CONFIG -------
+const CLOVA_URL =
+  "https://clovastudio.stream.ntruss.com/testapp/v1/chat-completions/HCX-DASH-001";
 
-  // Simple keyword-based analysis for demo
-  const lowerText = text.toLowerCase();
+const CLOVA_API_KEY = Deno.env.get('CLOVA_API_KEY')!;
 
-  let detectedMood = {
-    primary: 'neutral',
-    emotions: [] as string[],
-    intensity: 0.5,
+const SYSTEM_PROMPT = `You are a mood analyzer for movies.
+
+Your task:
+- Read the user's input (their current feeling, what they want to watch).
+- Analyze and choose mood tags ONLY from the list below.
+
+Available mood tags:
+["happy", "funny", "sad", "dark", "lonely", "warm", "healing", "romantic", "excited", "tense", "thrilling", "scary", "mysterious", "nostalgic", "cozy", "chaotic"]
+
+Output STRICT JSON:
+{
+  "mood_tags": [...],
+  "top_3": [...],
+  "confidence": 0.0-1.0
+}
+
+Rules:
+- mood_tags: 3-6 tags from the list that fit the user's mood.
+- top_3: the 3 most important moods. If not confident, choose fewer than 3.
+- Do NOT invent new mood words outside the list.
+- Answer with pure JSON only.`;
+
+async function callClovaMood(text: string) {
+  const body = {
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: text }
+    ],
+    topP: 0.8,
+    topK: 0,
+    maxTokens: 256,
+    temperature: 0.3,
+    repeatPenalty: 5.0,
+    includeAiFilters: true,
+    seed: 0
   };
 
-  if (lowerText.includes('vui') || lowerText.includes('hạnh phúc') || lowerText.includes('tự hào')) {
-    detectedMood.primary = 'happy';
-    detectedMood.emotions = ['joy', 'pride', 'contentment'];
-    detectedMood.intensity = 0.8;
-  } else if (lowerText.includes('buồn') || lowerText.includes('cô đơn') || lowerText.includes('chán')) {
-    detectedMood.primary = 'sad';
-    detectedMood.emotions = ['melancholy', 'loneliness', 'emptiness'];
-    detectedMood.intensity = 0.7;
-  } else if (lowerText.includes('căng thẳng') || lowerText.includes('lo lắng') || lowerText.includes('stress')) {
-    detectedMood.primary = 'anxious';
-    detectedMood.emotions = ['anxiety', 'stress', 'tension'];
-    detectedMood.intensity = 0.75;
-  } else if (lowerText.includes('bối rối') || lowerText.includes('không biết')) {
-    detectedMood.primary = 'confused';
-    detectedMood.emotions = ['confusion', 'uncertainty', 'indecision'];
-    detectedMood.intensity = 0.6;
-  } else if (lowerText.includes('nhàm chán') || lowerText.includes('thoát')) {
-    detectedMood.primary = 'bored';
-    detectedMood.emotions = ['boredom', 'restlessness', 'desire'];
-    detectedMood.intensity = 0.65;
+  const response = await fetch(CLOVA_URL, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${process.env.CLOVA_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!response.ok) {
+    console.error("❌ Clova error:", response.status, response.statusText);
+    const err = await response.text();
+    console.error("Error details:", err);
+    throw new Error("Clova request failed");
   }
 
-  return detectedMood;
+  const result = await response.json();
+
+  // Clova response structure
+  const content = result?.result?.message?.content;
+  if (!content) throw new Error("No content returned from Clova");
+
+  return JSON.parse(content); // { mood_tags, top_3, confidence }
 }
 
 // Emotional Journey - AI text analysis
-app.post('/make-server/analyze-emotional-journey', async (c) => {
+app.post("/make-server/analyze-emotional-journey", async (c) => {
   try {
     const { moodText } = await c.req.json();
 
     if (!moodText || !moodText.trim()) {
-      return c.text('Mood text is required', 400);
+      return c.text("Mood text is required", 400);
     }
 
-    console.log('Analyzing emotional journey from text:', moodText.substring(0, 100));
+    console.log("Calling Clova for:", moodText.slice(0, 100));
 
-    // Analyze mood (replace with actual AI)
-    const analysis = await analyzeMoodText(moodText);
+    // 🔥 Call Clova AI
+    const analysis = await callClovaMood(moodText);
 
-    // Generate journey based on analysis
+    console.log("Detected emotional analysis:", analysis);
+
+    const top3 = analysis.top_3; // ["sad", "healing", "lonely"]
+
+    if (!top3 || top3.length === 0) {
+      return c.text("No top_3 moods returned from AI", 500);
+    }
+
+    // Query 3 phim tương ứng với top3 moods, rating cao nhất
+    const { data: moviesData, error: moviesError } = await supabase
+      .from('movies')
+      .select('id, title, year, genre, poster_url, movie_overview, rating, mood')
+      .overlaps('mood', top3)   // dùng .overlaps trực tiếp, không dùng .filter
+      .order('rating', { ascending: false })
+      .limit(3);
+
+
+    if (moviesError) {
+      console.error('Supabase movies error:', moviesError);
+      throw moviesError;
+    }
+
+    // Nếu không đủ 3 phim, vẫn gán nhưng có thể null
     const journey = {
-      release: {
-        title: 'Everything Everywhere All at Once',
-        year: '2022',
-        poster: 'https://images.unsplash.com/photo-1655367574486-f63675dd69eb?w=400',
-        vignette: 'Một người phụ nữ bình thường khám phá vô số vũ trụ song song, mang theo cảm xúc hỗn loạn nhưng đầy màu sắc. Hành trình giải phóng cảm xúc qua những tình huống phi thường.',
-        quote: 'Trong vô vàn vũ trụ, tôi chọn yêu bạn.',
-        spectrum: { calm: 20, warm: 60, hopeful: 70, nostalgic: 30, bittersweet: 40, intense: 90 },
-      },
-      reflect: {
-        title: 'The Farewell',
-        year: '2019',
-        poster: 'https://images.unsplash.com/photo-1677741446873-bd348677e530?w=400',
-        vignette: 'Một gia đình Trung Quốc tổ chức đám cưới giả để tạm biệt bà nội đang mắc bệnh. Khoảnh khắc suy ngẫm về gia đình, sự dối trá tử tế, và tình yêu thương.',
-        quote: 'Đôi khi, tình yêu là giữ bí mật.',
-        spectrum: { calm: 40, warm: 80, hopeful: 50, nostalgic: 85, bittersweet: 90, intense: 30 },
-      },
-      rebuild: {
-        title: 'Little Miss Sunshine',
-        year: '2006',
-        poster: 'https://images.unsplash.com/photo-1588852112013-6b63362bc583?w=400',
-        vignette: 'Một gia đình rối loạn cùng nhau lên đường đưa cô con gái nhỏ đến cuộc thi sắc đẹp. Hài hước, ấm áp, và đầy hy vọng về sức mạnh của sự đoàn kết.',
-        quote: 'Chúng ta không thất bại, chỉ là chưa thắng.',
-        spectrum: { calm: 60, warm: 90, hopeful: 95, nostalgic: 50, bittersweet: 30, intense: 20 },
-      },
+      release: moviesData?.[0] || null,
+      reflect: moviesData?.[1] || null,
+      rebuild: moviesData?.[2] || null,
     };
 
-    // Customize based on detected mood
-    if (analysis.primary === 'happy') {
-      journey.rebuild.title = 'Amélie';
-      journey.rebuild.year = '2001';
-    }
-
-    console.log('Emotional journey generated based on mood:', analysis.primary);
+    // Optionally giữ thêm các trường cứng hoặc spectrum nếu cần
+    // journey.release.spectrum = {...}, ...
 
     return c.json(journey);
-  } catch (error: any) {
-    console.error('Analyze emotional journey error:', error);
-    return c.text(error.message || 'Failed to analyze emotional journey', 500);
+
+  } catch (err: any) {
+    console.error("🔥 Emotional journey error:", err);
+    return c.text(err.message || "Failed to analyze emotional journey", 500);
   }
 });
 
