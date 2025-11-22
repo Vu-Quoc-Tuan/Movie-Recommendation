@@ -14,9 +14,6 @@ export interface CharacterMatchResult {
             calm: number;
             warm: number;
             hopeful: number;
-            nostalgic: number;
-            bittersweet: number;
-            intense: number;
         };
     };
 }
@@ -25,9 +22,6 @@ export interface EmotionSpectrum {
     calm: number;
     warm: number;
     hopeful: number;
-    nostalgic: number;
-    bittersweet: number;
-    intense: number;
 }
 
 export interface JourneyStep {
@@ -72,7 +66,7 @@ export interface PartyRecommendation {
     reason: string;
 }
 
-    export interface PartyMoodRequest {
+export interface PartyMoodRequest {
     name: string;
     mood?: string;
     moodText?: string;

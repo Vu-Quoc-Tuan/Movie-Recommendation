@@ -3,9 +3,6 @@ interface EmotionSpectrumProps {
     calm: number;
     warm: number;
     hopeful: number;
-    nostalgic: number;
-    bittersweet: number;
-    intense: number;
   };
   mini?: boolean;
 }
@@ -14,9 +11,6 @@ const emotionColors = {
   calm: { bg: 'bg-blue-500', text: 'Calm' },
   warm: { bg: 'bg-orange-500', text: 'Warm' },
   hopeful: { bg: 'bg-green-500', text: 'Hopeful' },
-  nostalgic: { bg: 'bg-purple-500', text: 'Nostalgic' },
-  bittersweet: { bg: 'bg-pink-500', text: 'Bittersweet' },
-  intense: { bg: 'bg-red-500', text: 'Intense' },
 };
 
 export function EmotionSpectrum({ spectrum, mini = false }: EmotionSpectrumProps) {

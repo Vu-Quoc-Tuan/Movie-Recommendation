@@ -1,6 +1,7 @@
 import { supabase } from '../../../lib/supabase/client';
-import {Movie} from "../types/movie.types";
+import { Movie } from "../types/movie.types";
 import { getApiEndpoint } from '../../../lib/api/apiClient';
+import generateRandomSpectrum from '../../../lib/helper/randomSpectrum';
 
 /**
  * Fetch movies from Supabase database with filters, search, sorting, and pagination.
@@ -86,7 +87,7 @@ export async function fetchMoodPicks(): Promise<Movie[]> {
   try {
     // 1. Check if user is logged in via localStorage
     const token = localStorage.getItem('cine_token');
-    
+
     if (token) {
       // 2. Call Backend Recommendation Endpoint
       try {
@@ -135,7 +136,7 @@ export async function fetchMoodPicks(): Promise<Movie[]> {
  */
 export async function addToHistory(movieId: string) {
   const token = localStorage.getItem('cine_token');
-  
+
   if (!token) {
     console.warn('User not logged in, cannot save history');
     return;
@@ -154,7 +155,7 @@ export async function addToHistory(movieId: string) {
     if (!response.ok) {
       throw new Error(`Failed to add history: ${response.statusText}`);
     }
-    
+
     console.log('Successfully added to history:', movieId);
   } catch (error) {
     console.error('Error adding to history:', error);
@@ -173,52 +174,45 @@ function getYoutubeId(url: string | null | undefined): string {
 function mapToMovie(movie: any): Movie {
   // Construct whereToWatch based on available data
   const whereToWatch: Record<string, string> = {};
-  
+
   if (movie.youtube_link) {
     whereToWatch['YouTube'] = movie.youtube_link;
   }
-  
+
   // Mock data for testing if empty (Remove this in production if you have real data)
   if (Object.keys(whereToWatch).length === 0) {
-     whereToWatch['Netflix'] = 'https://www.netflix.com/search?q=' + encodeURIComponent(movie.title);
-     whereToWatch['Google Play'] = 'https://play.google.com/store/search?c=movies&q=' + encodeURIComponent(movie.title);
+    whereToWatch['Netflix'] = 'https://www.netflix.com/search?q=' + encodeURIComponent(movie.title);
+    whereToWatch['Google Play'] = 'https://play.google.com/store/search?c=movies&q=' + encodeURIComponent(movie.title);
   }
 
   const trailerId = getYoutubeId(movie.youtube_link);
 
   return {
-      id: movie.id,
-      title: movie.title,
-      year: movie.year,
-      poster_url: movie.poster_url,
-      poster: movie.poster_url,
-      overview: movie.movie_overview,
-      movie_overview: movie.movie_overview,
-      genres: movie.genre || [],
-      genre: movie.genre,
-      country: movie.country,
-      region: movie.country,
-      youtube_link: movie.youtube_link,
-      trailerYoutubeId: trailerId,
-      whereToWatch: whereToWatch,
-      rating: 7.5,
-      vibes: movie.mood || ['Emotional'], // Map DB mood to vibes
-      spectrum: {
-        calm: 50,
-        warm: 70,
-        hopeful: 60,
-        nostalgic: 50,
-        bittersweet: 40,
-        intense: 40,
-      },
-      whyFitsVibe: movie.movie_overview || 'Great movie!',
-      whyMatchesMood: movie.movie_overview || 'Perfect for your mood.',
-      vignette: movie.movie_overview || 'An engaging story.',
-      quote: 'A memorable film.',
-      runtime: 120,
-      weatherMatch: 75,
-      ostLink: '#',
-      created_at: movie.created_at,
+    id: movie.id,
+    title: movie.title,
+    year: movie.year,
+    poster_url: movie.poster_url,
+    poster: movie.poster_url,
+    overview: movie.movie_overview,
+    movie_overview: movie.movie_overview,
+    genres: movie.genre || [],
+    genre: movie.genre,
+    country: movie.country,
+    region: movie.country,
+    youtube_link: movie.youtube_link,
+    trailerYoutubeId: trailerId,
+    whereToWatch: whereToWatch,
+    rating: 7.5,
+    vibes: movie.mood || ['Emotional'], // Map DB mood to vibes
+    spectrum: generateRandomSpectrum(),
+    whyFitsVibe: movie.movie_overview || 'Great movie!',
+    whyMatchesMood: movie.movie_overview || 'Perfect for your mood.',
+    vignette: movie.movie_overview || 'An engaging story.',
+    quote: 'A memorable film.',
+    runtime: 120,
+    weatherMatch: 75,
+    ostLink: '#',
+    created_at: movie.created_at,
   };
 }
 

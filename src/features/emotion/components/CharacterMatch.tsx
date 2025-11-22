@@ -4,14 +4,7 @@ import { ImageWithFallback } from '../../../components/shared/ImageWithFallback'
 import { EmotionSpectrum } from './EmotionSpectrum';
 import { CharacterMatchResult } from "../types/emotion.types";
 import { analyzeCharacterMatch } from "../api/emotionApi";
-
-function generateRandomSpectrum() {
-  return {
-    calm: Math.floor(Math.random() * 101),
-    warm: Math.floor(Math.random() * 101),
-    hopeful: Math.floor(Math.random() * 101),
-  };
-}
+import generateRandomSpectrum from '../../../lib/helper/randomSpectrum';
 
 export function CharacterMatch() {
   const [moodText, setMoodText] = useState('');

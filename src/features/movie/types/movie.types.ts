@@ -10,9 +10,6 @@ export interface Movie {
         calm: number;
         warm: number;
         hopeful: number;
-        nostalgic: number;
-        bittersweet: number;
-        intense: number;
     };
     overview?: string;
     movie_overview?: string; // From DB
