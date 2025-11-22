@@ -309,7 +309,7 @@ app.get('/make-server/user/history', async (c) => {
       return c.json([]);
     }
 
-    // Extract movie IDs
+    // Extract movie ID
     const movieIds = historyData.map((item: any) => item.movie_id);
 
     // Query movies by IDs
@@ -634,7 +634,24 @@ export async function analyzeMovies(moviesData, moodTextGroup) {
   return list;
 }
 
+export async function analyzeCharacters(moviesData: any[], moodText: string) {
+  const list = [];
 
+  for (const movie of moviesData) {
+    const userInput =
+      `${moodText}\n\n---\nThông tin nhân vật:\n` +
+      JSON.stringify(movie);
+
+    const aiScore = await apiHelper(userInput, 2); // 2 = movie matching
+
+    list.push({
+      movieId: movie.id,
+      aiScore
+    });
+  }
+
+  return list;
+}
 
 // Emotional Journey - AI text analysis
 app.post("/make-server/analyze-emotional-journey", async (c) => {
@@ -645,12 +662,8 @@ app.post("/make-server/analyze-emotional-journey", async (c) => {
       return c.text("Mood text is required", 400);
     }
 
-    console.log("Calling Clova for:", moodText.slice(0, 100));
-
-    // 🔥 Call Clova AI
+    // Call Clova AI
     const analysis = await callClovaMood(moodText, "single");
-
-    console.log("Detected emotional analysis:", analysis);
 
     const top3 = analysis.top_3; // ["sad", "healing", "lonely"]
 
@@ -754,58 +767,49 @@ app.post('/make-server/analyze-character-match', async (c) => {
       return c.text('Mood text is required', 400);
     }
 
-    console.log('Analyzing character match from text:', moodText.substring(0, 100));
-
-    // Analyze mood
     const analysis = await charactorAnalyze(moodText);
-    console.log('Character match mood analysis:', analysis);
 
-    // Generate character match (this would ideally use a more sophisticated AI)
-    let match = {
-      movie: {
-        title: 'Amélie',
-        year: '2001',
-        poster: 'https://images.unsplash.com/photo-1655367574486-f63675dd69eb?w=400',
-        rating: 8.3,
-        character: 'Amélie Poulain',
-        characterDescription: 'Một cô gái trẻ với trí tưởng tượng phong phú, luôn tìm cách làm cho cuộc sống của người khác tốt đẹp hơn. Cô sống trong thế giới riêng nhưng đầy tử tế và nhiệt tình.',
-        similarity: 87,
-        whyMatch: 'Giống bạn, Amélie có trái tim nhân hậu và luôn muốn mang lại điều tốt đẹp cho người khác. Cô cảm thấy hạnh phúc khi giúp đỡ người khác, giống như cách bạn cảm thấy khi trả lại tiền cho người đánh mất.',
-        vignette: 'Amélie tìm thấy hộp kỷ vật cũ và quyết tâm trả lại cho chủ nhân. Khi nhìn thấy niềm vui của người đàn ông già, cô nhận ra sứ mệnh của mình.',
-        quote: 'Hạnh phúc nhỏ nhoi cũng là hạnh phúc.',
-        spectrum: { calm: 60, warm: 95, hopeful: 90, nostalgic: 65, bittersweet: 30, intense: 20 },
-      },
-    };
-
-    // Customize based on detected mood
-    if (analysis.primary === 'confused') {
-      match.movie.title = 'Lost in Translation';
-      match.movie.character = 'Charlotte';
-      match.movie.characterDescription = 'Một phụ nữ trẻ đang tìm kiếm ý nghĩa cuộc sống, cảm thấy lạc lõng trong một thành phố xa lạ và trong chính cuộc đời mình.';
-      match.movie.whyMatch = 'Giống bạn, Charlotte đang đối mặt với những quyết định khó khăn và cảm giác bối rối về hướng đi của cuộc đời. Cô dần tìm thấy sự kết nối và ý nghĩa qua những mối quan hệ bất ngờ.';
-      match.movie.similarity = 89;
-    } else if (analysis.primary === 'bored') {
-      match.movie.title = 'The Secret Life of Walter Mitty';
-      match.movie.character = 'Walter Mitty';
-      match.movie.characterDescription = 'Một nhân viên văn phòng sống cuộc sống nhàm chán, luôn mơ về những cuộc phiêu lưu. Một ngày, anh quyết định bước ra khỏi vùng an toàn.';
-      match.movie.whyMatch = 'Như bạn, Walter cảm thấy cuộc sống đang lặp đi lặp lại và khao khát điều gì đó mới mẻ. Hành trình của anh là nguồn cảm hứng để bạn dám thay đổi.';
-      match.movie.similarity = 91;
-    } else if (analysis.primary === 'sad') {
-      match.movie.title = 'A Werewolf Boy';
-      match.movie.character = 'Soon-yi';
-      match.movie.characterDescription = 'Một cô gái tìm thấy tình bạn và tình yêu thuần khiết trong hoàn cảnh cô đơn. Cô học cách yêu thương và được yêu thương bất chấp mọi khó khăn.';
-      match.movie.whyMatch = 'Giống bạn, Soon-yi trải qua những cảm xúc sâu sắc về sự mất mát và cô đơn, nhưng cũng tìm thấy hy vọng và ấm áp trong tình yêu thương.';
-      match.movie.similarity = 85;
+    // Get character match list
+    const matchList = await analyzeCharacters(analysis, moodText);
+    if (!matchList || matchList.length === 0) {
+      return c.text('No character matches found', 404);
     }
 
-    console.log('Character match generated:', match.movie.character);
+    // Find movie with highest match_score
+    const validMatches = matchList.filter(m => m.aiScore && typeof m.aiScore.match_score === 'number');
 
-    return c.json(match);
+    if (validMatches.length === 0) {
+      return c.text('No valid character matches found', 404);
+    }
+
+    const bestMatch = validMatches.reduce((prev, curr) => {
+      return (curr.aiScore!.match_score! > prev.aiScore!.match_score!) ? curr : prev;
+    }, validMatches[0]);
+
+    // Query Supabase for movie details
+    const { data: movieData, error: movieError } = await supabase
+      .from('movies')
+      .select('title, year, poster_url, rating')
+      .eq('id', bestMatch.movieId)
+      .single();
+
+    if (movieError) {
+      console.error('❌ Supabase error fetching movie:', movieError);
+    }
+
+    // Merge movie details into bestMatch
+    const result = {
+      ...bestMatch,
+      movie: movieData || null
+    };
+
+    return c.json(result);
   } catch (error: any) {
     console.error('Analyze character match error:', error);
     return c.text(error.message || 'Failed to analyze character match', 500);
   }
 });
+
 
 // ===== RECOMMENDATION ROUTES =====
 
