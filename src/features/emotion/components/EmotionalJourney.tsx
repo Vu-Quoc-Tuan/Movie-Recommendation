@@ -3,15 +3,8 @@ import { ArrowRight, Heart, Sparkles, Loader2 } from 'lucide-react';
 import { EmotionSpectrum } from './EmotionSpectrum';
 import { ImageWithFallback } from '../../../components/shared/ImageWithFallback';
 import { analyzeEmotionalJourney } from "../api/emotionApi";
+import generateRandomSpectrum from '../../../lib/helper/randomSpectrum';
 
-// Helper function to generate random spectrum values
-function generateRandomSpectrum() {
-  return {
-    calm: Math.floor(Math.random() * 101),
-    warm: Math.floor(Math.random() * 101),
-    hopeful: Math.floor(Math.random() * 101),
-  };
-}
 
 const moods = [
   { value: 'anxious', label: '😰 Lo lắng', color: 'bg-red-100 dark:bg-red-900/20' },
