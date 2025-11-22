@@ -9,6 +9,7 @@ import * as bcrypt from 'npm:bcryptjs';
 import * as jose from 'npm:jose';
 
 import charactorAnalyze from "../../../src/lib/api/aiAnalysis.ts";
+import { apiHelper } from "../../../src/lib/api/api_score.ts";
 
 const app = new Hono();
 
@@ -612,6 +613,29 @@ async function callClovaMood(text: string, mode?: 'party' | 'single') {
   return JSON.parse(content); // { mood_tags, top_3, confidence }
 }
 
+export async function analyzeMovies(moviesData, moodTextGroup) {
+  const list = [];
+
+  for (const movie of moviesData) {
+    const userInput =
+      moodTextGroup +
+      "\n\n---\nThông tin phim:\n" +
+      JSON.stringify(movie);
+
+    const aiScore = await apiHelper(userInput, 1);
+
+    list.push({
+      movieId: movie.id,
+      movieTitle: movie.title,
+      aiScore
+    });
+  }
+
+  return list;
+}
+
+
+
 // Emotional Journey - AI text analysis
 app.post("/make-server/analyze-emotional-journey", async (c) => {
   try {
@@ -672,7 +696,7 @@ app.post('/make-server/analyze-party-mood', async (c) => {
       return c.text("Party requires 2-4 members", 400);
     }
 
-    // 👉 Convert members → moodTextGroup
+    // Convert members → moodTextGroup
     const moodTextGroup = members
       .map((m) => {
         const main = `${m.name} đang cảm thấy ${m.mood}`;
@@ -681,18 +705,15 @@ app.post('/make-server/analyze-party-mood', async (c) => {
       })
       .join("\n");
 
-    console.log("Calling Clova for:", moodTextGroup.slice(0, 150));
-
-    // 🔥 Call Clova AI
+    // Call Clova AI
     const analysis = await callClovaMood(moodTextGroup, "party");
-
     const top3 = analysis.top_3;
 
     if (!top3 || top3.length === 0) {
       return c.text("No top_3 moods returned from AI", 500);
     }
 
-    // ⭐ Party mode chỉ lấy 2 phim
+    // Lấy 2 phim
     const { data: moviesData, error: moviesError } = await supabase
       .from('movies')
       .select('id, title, year, genre, poster_url, movie_overview, rating, mood')
@@ -702,9 +723,20 @@ app.post('/make-server/analyze-party-mood', async (c) => {
 
     if (moviesError) throw moviesError;
 
-    // ⭐ Output mới: mảng 2 phim
+    // Phân tích từng phim
+    const movieAnalysis = await analyzeMovies(moviesData, moodTextGroup);
+
+    // Merge luôn vào recommendations
+    const mergedData = moviesData.map(movie => {
+      const ai = movieAnalysis.find(a => a.movieId === movie.id);
+      return {
+        ...movie,
+        analysis: ai?.aiScore || null
+      };
+    });
+
     return c.json({
-      recommendations: moviesData ?? []
+      recommendations: mergedData
     });
 
   } catch (err: any) {
@@ -712,8 +744,6 @@ app.post('/make-server/analyze-party-mood', async (c) => {
     return c.text(err.message || "Failed to analyze party mood", 500);
   }
 });
-
-
 
 // Character Match - AI analysis
 app.post('/make-server/analyze-character-match', async (c) => {
