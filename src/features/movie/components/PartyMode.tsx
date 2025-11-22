@@ -46,7 +46,7 @@ export function PartyMode() {
   };
 
   const handleFind = async () => {
-    // Kiểm tra dữ liệu hợp lệ trước
+
     const allFilled =
       mode === 'buttons'
         ? members.every(m => m.name && m.mood)
@@ -66,10 +66,10 @@ export function PartyMode() {
       }));
 
       const journey = await analyzePartyMood(payload);
+      console.log(journey)
 
       // Lưu kết quả trả về
       setAiRecommendations(journey.recommendations || []);
-      console.log(journey);
 
       setShowResults(true);
     } catch (error) {
@@ -151,7 +151,7 @@ export function PartyMode() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {(aiRecommendations.length > 0 ? aiRecommendations : recommendations)!.map((movie) => (
+          {(aiRecommendations.length > 0 ? aiRecommendations : recommendations).map((movie) => (
             <div
               key={movie.id}
               className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all"
@@ -171,7 +171,7 @@ export function PartyMode() {
                       <p className="text-sm text-gray-500 dark:text-gray-400">{movie.year}</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl mb-1">{movie.matchScore}%</div>
+                      <div className="text-2xl mb-1">{movie.analysis.match_score}%</div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">Match</div>
                     </div>
                   </div>
@@ -194,7 +194,7 @@ export function PartyMode() {
 
                   <p className="text-sm text-gray-600 dark:text-gray-300">
                     <Sparkles className="w-4 h-4 inline mr-1 text-purple-500" />
-                    {movie.movie_overview}
+                    {movie.analysis.reason}
                   </p>
 
                   <button className="w-full mt-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg transition-all">

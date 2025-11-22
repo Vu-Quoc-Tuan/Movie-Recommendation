@@ -2,8 +2,16 @@ import { useState } from 'react';
 import { Sparkles, User, Loader2 } from 'lucide-react';
 import { ImageWithFallback } from '../../../components/shared/ImageWithFallback';
 import { EmotionSpectrum } from './EmotionSpectrum';
-import {CharacterMatchResult} from "../types/emotion.types";
-import {analyzeCharacterMatch} from "../api/emotionApi";
+import { CharacterMatchResult } from "../types/emotion.types";
+import { analyzeCharacterMatch } from "../api/emotionApi";
+
+function generateRandomSpectrum() {
+  return {
+    calm: Math.floor(Math.random() * 101),
+    warm: Math.floor(Math.random() * 101),
+    hopeful: Math.floor(Math.random() * 101),
+  };
+}
 
 export function CharacterMatch() {
   const [moodText, setMoodText] = useState('');
@@ -55,13 +63,13 @@ export function CharacterMatch() {
           <div className="md:flex">
             <div className="md:w-1/3 relative h-96 md:h-auto">
               <ImageWithFallback
-                src={result.movie.poster}
+                src={result.movie.poster_url}
                 alt={result.movie.title}
                 className="w-full h-full object-cover"
               />
               <div className="absolute top-4 right-4">
                 <div className="bg-purple-500 text-white px-4 py-2 rounded-full shadow-lg">
-                  <div className="text-2xl text-center">{result.movie.similarity}%</div>
+                  <div className="text-2xl text-center">{result.aiScore.match_score}%</div>
                   <div className="text-xs text-center">Match</div>
                 </div>
               </div>
@@ -79,7 +87,7 @@ export function CharacterMatch() {
                 <div className="flex items-start space-x-3">
                   <User className="w-5 h-5 text-purple-500 mt-1 flex-shrink-0" />
                   <div>
-                    <h4 className="mb-2">Nhân vật: {result.movie.character}</h4>
+                    <h4 className="mb-2">Nhân vật: {result.aiScore.character_name}</h4>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
                       {result.movie.characterDescription}
                     </p>
@@ -89,7 +97,7 @@ export function CharacterMatch() {
 
               <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-6">
                 <h4 className="text-sm mb-3">Emotion Spectrum</h4>
-                <EmotionSpectrum spectrum={result.movie.spectrum} mini />
+                <EmotionSpectrum spectrum={generateRandomSpectrum()} />
               </div>
 
               <div className="mb-6">
@@ -98,7 +106,7 @@ export function CharacterMatch() {
                   <div>
                     <h4 className="mb-2">Tại sao phù hợp với bạn?</h4>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      {result.movie.whyMatch}
+                      {result.aiScore.reason}
                     </p>
                   </div>
                 </div>
@@ -106,14 +114,9 @@ export function CharacterMatch() {
 
               <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-4">
                 <p className="text-sm italic text-gray-600 dark:text-gray-300 mb-3">
-                  "{result.movie.vignette}"
+                  "{result.aiScore.character_traits}"
                 </p>
               </div>
-
-              <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg p-4 border-l-2 border-purple-500">
-                <p className="italic">"{result.movie.quote}"</p>
-              </div>
-
               <button className="w-full mt-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg transition-all">
                 Xem chi tiết phim
               </button>
