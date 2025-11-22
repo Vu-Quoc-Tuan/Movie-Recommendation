@@ -1,123 +1,316 @@
+# Movie Recommendation System
 
-# 🎬 Emotional Movie Recommendation App
+An intelligent movie recommendation application based on user emotions and moods, using AI to analyze and suggest suitable movies.
 
-#### Ứng dụng gợi ý phim theo cảm xúc.  
+## Key Features
 
-## 🚀 Cách chạy dự án
+-  **Emotion Analysis**: Uses AI (CLOVA) to analyze mood and suggest appropriate movies
+-  **Speech-to-Text**: Converts voice to text for emotion input
+-  **Personalized Recommendations**: Based on viewing history and user preferences
+-  **Party Mode**: Analyzes group mood and suggests movies for multiple people
+-  **Character Matching**: Finds movie characters that match user personality
+-  **Movie Management**: Save favorite movies, view history
+-  **Search & Filter**: Search movies by multiple criteria (year, genre, rating, etc.)
 
-### Phương pháp 1: Sử dụng Docker Compose (Khuyến nghị)
+##  Tech Stack
 
-#### 1. Chuẩn bị file môi trường
+### Frontend
+- **Framework**: React 18 + TypeScript
+- **Build Tool**: Vite 6
+- **UI Library**: Radix UI + Tailwind CSS
+- **State Management**: React Hooks
+- **Deployment**: Nginx (Docker)
 
-Tạo file `.env` trong thư mục gốc với các biến sau:
+### Backend
+- **Framework**: NestJS 11 (TypeScript)
+- **Database**: Supabase (PostgreSQL)
+- **AI Services**:
+  - CLOVA AI (mood analysis, embeddings)
+  - CLOVA Speech-to-Text
+- **Authentication**: JWT (JOSE)
+- **Deployment**: Docker
 
-```bash
-SUPABASE_URL=https://wuvynyiopwzwtesbiojf.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
-CLOVA_API_KEY=your_clova_api_key_here
-TMDB_API_KEY=your_tmdb_api_key_here
-SUPABASE_PROJECT_ID=your_supabase_project_id_here
-SUPABASE_PUBLIC_ANON_KEY=your_supabase_anon_key_here
-SUPABASE_DB_URL=your_supabase_database_url_here
-VITE_SUPABASE_PROJECT_ID=your_supabase_project_id_here
-VITE_SUPABASE_PUBLIC_ANON_KEY=your_supabase_anon_key_here
 
+### Infrastructure
+- **Containerization**: Docker & Docker Compose
+- **Database**: Supabase (PostgreSQL with vector search)
+- **API**: RESTful API
+
+## Project Structure
+```aiignore
+Movie-Recommendation/
+├── client/ # React Frontend
+│ ├── src/
+│ │ ├── features/ # Feature modules
+│ │ │ ├── auth/ # Authentication
+│ │ │ ├── emotion/ # Emotion analysis UI
+│ │ │ └── movie/ # Movie browsing
+│ │ ├── components/ # Shared components
+│ │ └── lib/ # Utilities
+│ └── Dockerfile
+├── server/ # NestJS Backend
+│ ├── src/
+│ │ ├── ai/ # AI services (mood analysis, STT)
+│ │ ├── auth/ # Authentication
+│ │ ├── movie/ # Movie CRUD
+│ │ ├── recommendation/# Recommendation engine
+│ │ ├── user/ # User management
+│ │ ├── common/ # Shared modules (AI, Supabase, JWT)
+│ │ └── main.ts
+│ ├── supabase/ # Database migrations & seeds
+│ └── Dockerfile
+└── docker-compose.yml # Docker orchestration
 ```
 
+## Installation and Setup
 
-#### 2. Chạy ứng dụng với Docker Compose
+### Prerequisites
+
+- Node.js >= 20.0.0
+- npm >= 10.0.0
+- Docker & Docker Compose (for production)
+- Supabase account
+- CLOVA API keys (Naver Cloud Platform)
+
+### Method 1: Docker Compose (Recommended)
+
+#### 1. Clone repository
 
 ```bash
-docker-compose up -d
+git clone https://github.com/Vu-Quoc-Tuan/Movie-Recommendation
+cd Movie-Recommendation
 ```
 
-Sau khi chạy thành công:
-- **Backend Server**: http://localhost:8000
-- **Frontend**: http://localhost:8080
+#### 2. Create `.env` file
 
-#### 3. Các lệnh Docker Compose hữu ích
+Create a `.env` file in the root directory with the following content:
+
+```env
+# Supabase Configuration
+SUPABASE_PROJECT_ID=your_project_id
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+SUPABASE_PUBLIC_ANON_KEY=your_anon_key
+
+# AI Services
+CLOVA_API_KEY=your_clova_api_key
+CLOVA_CLIENT_ID=your_clova_client_id
+CLOVA_STT_SECRET=your_clova_stt_secret
+
+# Optional: TMDB API (for movie data)
+TMDB_API_KEY=your_tmdb_api_key
+```
+
+#### 3. Run with Docker Compose
 
 ```bash
-# Xem logs
-docker-compose logs -f
-
-# Dừng các container
-docker-compose down
-
-# Rebuild và chạy lại
+# Build and run containers
 docker-compose up -d --build
 
-# Xem trạng thái các container
-docker-compose ps
+# View logs
+docker-compose logs -f
+
+# Stop containers
+docker-compose down
 ```
 
----
+After successful startup:
+- **Frontend**: http://localhost:8080
+- **Backend API**: http://localhost:8000
+- **Health Check**: http://localhost:8000/make-server/health
 
-### Phương pháp 2: Chạy thủ công (Development)
+### Method 2: Development Mode (Manual)
 
-#### 1. Cài đặt thư viện
-```bash
-npm i
-```
-
-#### 2. Lấy dữ liệu phim từ database
+#### Frontend Setup
 
 ```bash
-cd supabase
-npx tsx seed/movies.ts
-```
+cd client
 
-#### 3. Chạy server Deno (làm trung gian kết nối Supabase)
+# Install dependencies
+npm install
 
-```bash
-deno run -A server/functions/make-server/index.tsx
-```
+# Create .env.local file (optional, if not using Docker)
+echo "VITE_API_URL=http://localhost:8000" > .env.local
+echo "VITE_SUPABASE_PROJECT_ID=your_project_id" >> .env.local
+echo "VITE_SUPABASE_ANON_KEY=your_anon_key" >> .env.local
 
-#### 4. Chạy frontend
-
-```bash
+# Run development server
 npm run dev
 ```
 
----
+Frontend will run at: http://localhost:3000
 
-## 🏗️ Build và deploy
 
-### 1. Deploy Deno functions lên Supabase
+#### Backend Setup
 
 ```bash
-supabase functions deploy make-server-0c50a72d
+cd server
+
+# Install dependencies
+npm install
+
+# Run database migrations
+cd supabase
+npm install
+npm run migrate
+
+# Seed data (optional)
+npm run seed
+
+# Run development server
+cd ..
+npm run start:dev
 ```
 
-### 2. Build frontend (sử dụng biến môi trường trong `.env.production`)
+Backend will run at: http://localhost:8000
+
+## API Endpoints
+
+### Authentication
+- `POST /make-server/auth/register` - Register
+- `POST /make-server/auth/login` - Login
+
+### Movies
+- `GET /make-server/movies` - Get movie list (with filters, search, pagination)
+- `GET /make-server/movies/:id` - Get movie details
+
+### AI & Recommendations
+- `POST /make-server/analyze-emotional-journey` - Analyze emotional journey
+- `POST /make-server/analyze-party-mood` - Analyze group mood
+- `POST /make-server/analyze-character-match` - Find matching character
+- `POST /make-server/stt` - Speech-to-Text (file upload)
+
+### Recommendations
+- `POST /make-server/recommend/personal` - Personal recommendations (requires auth)
+- `GET /make-server/recommend/random` - Random recommendations
+
+### User
+- `GET /make-server/user/profile` - Get profile (requires auth)
+- `POST /make-server/user/save` - Save movie (requires auth)
+- `GET /make-server/user/saved` - Get saved movies list (requires auth)
+- `POST /make-server/user/history` - Add to history (requires auth)
+- `GET /make-server/user/history` - Get history (requires auth)
+
+### Health Check
+- `GET /make-server/health` - Health check endpoint
+
+## Configuration
+
+### Environment Variables
+
+#### Frontend (.env.local)
+```env
+VITE_API_URL=/api
+VITE_SUPABASE_PROJECT_ID=...
+VITE_SUPABASE_ANON_KEY=...
+```
+
+
+#### Backend (.env)
+```env
+NODE_ENV=production
+PORT=8000
+SUPABASE_PROJECT_ID=...
+SUPABASE_SERVICE_ROLE_KEY=...
+SUPABASE_PUBLIC_ANON_KEY=...
+CLOVA_API_KEY=...
+CLOVA_CLIENT_ID=...
+CLOVA_STT_SECRET=...
+TMDB_API_KEY=...
+```
+
+### Database Setup
+
+1. Create a Supabase project
+2. Run migrations:
+```bash
+cd server/supabase
+npm run migrate
+```
+3. Seed data (optional):
+```bash
+npm run seed
+```
+
+## Docker Commands
 
 ```bash
+# Build and run
+docker-compose up -d --build
+
+# View logs
+docker-compose logs -f server
+docker-compose logs -f client
+
+# Rebuild a service
+docker-compose build server
+docker-compose up -d server
+
+# View status
+docker-compose ps
+
+# Stop and remove containers
+docker-compose down
+
+# Stop and remove volumes (delete data)
+docker-compose down -v
+```
+
+
+## Production Build
+
+
+### Frontend
+```bash
+cd client
+npm run build
+# Output: client/build/
+```
+
+### Backend
+```bash
+cd server
+npm run build
+npm run start:prod
+```
+
+
+## Deployment
+
+### With Docker Compose
+
+1. Configure `.env` with production values
+2. Build and deploy:
+```bash
+docker-compose up -d --build
+```
+
+### Manual Deployment
+
+1. Build backend:
+```bash
+cd server
 npm run build
 ```
 
-### 3. Deploy frontend lên Vercel hoặc Netlify
-
+2. Build frontend:
 ```bash
-...
+cd client
+npm run build
 ```
 
----
+3. Deploy:
+  - Backend: Run `node dist/src/main.js` on server
+  - Frontend: Serve `build/` folder with Nginx or CDN
 
-## 💡 Ghi chú
 
-* Mỗi khi thay đổi dữ liệu phim trong database, có thể chạy lại:
+## Authors
 
-  ```bash
-  npx tsx seed/movies.ts
-  ```
-* Nếu gặp lỗi kết nối, kiểm tra lại URL và Anon Key trong file `.env`
-* Khi sử dụng Docker Compose, đảm bảo Docker và Docker Compose đã được cài đặt
-* Các container sẽ tự động restart nếu bị crash (restart: unless-stopped)
+- North2South-Tech Team
 
----
+## Acknowledgments
 
-✨ **Nhóm phát triển:** Movie Recommendation Team
-
-🛠️ **Công nghệ:** React, Supabase, Deno, Docker
-
+- CLOVA AI (Naver Cloud Platform) for AI services
+- Supabase for database and authentication
+- TMDB for movie data
+- All open-source contributors
 

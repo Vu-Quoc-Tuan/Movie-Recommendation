@@ -1,6 +1,0 @@
-{
-    "imports": {
-      "dotenv/config": "jsr:@std/dotenv/load",
-      "@supabase/supabase-js": "npm:@supabase/supabase-js@2"
-    }
-  }
