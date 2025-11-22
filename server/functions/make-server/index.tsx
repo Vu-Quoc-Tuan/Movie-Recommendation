@@ -529,10 +529,53 @@ Rules:
 - Do NOT invent new mood words outside the list.
 - Answer with pure JSON only.`;
 
-async function callClovaMood(text: string) {
+const PARTY_MODE_PROMPT = `
+You are a mood analyzer for movies.
+
+This time, the input comes from *multiple people* (a group of 2–4 members).
+Each member will describe:
+- Their current feeling
+- The type of movie they want to watch
+
+Your task:
+- Read ALL members' inputs.
+- Identify each person's individual moods.
+- Compute the *intersection*, *overlap*, or *collective blend* of group emotions.
+- Then generate mood_tags and top_3 that best represent the group's shared emotional direction.
+
+Available mood tags:
+["happy", "funny", "sad", "dark", "lonely", "warm", "healing", "romantic", "excited", "tense", "thrilling", "scary", "mysterious", "nostalgic", "cozy", "chaotic"]
+
+Output STRICT JSON:
+{
+  "mood_tags": [...],
+  "top_3": [...],
+  "confidence": 0.0-1.0
+}
+
+Rules:
+- mood_tags: 3–6 tags from the list that fit the *group's combined mood*.
+- top_3: the 3 most important moods. If not confident, choose fewer than 3.
+- Do NOT invent new mood words outside the list.
+- Answer with pure JSON only.
+
+Additional group rules for Party Mode:
+- If multiple members share a common mood, prioritize that mood.
+- If their emotions differ, generate a blended set that best fits all members.
+- Avoid extremes unless at least half the group expresses that feeling.
+- Confidence should reflect how aligned the group is emotionally:
+  - High overlap → 0.8–1.0
+  - Medium overlap → 0.5–0.79
+  - Very different moods → 0.3–0.49
+
+`
+
+async function callClovaMood(text: string, mode?: 'party' | 'single') {
+  const systemPrompt = mode === 'party' ? PARTY_MODE_PROMPT : SYSTEM_PROMPT;
+
   const body = {
     messages: [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: systemPrompt },
       { role: "user", content: text }
     ],
     topP: 0.8,
@@ -581,7 +624,7 @@ app.post("/make-server/analyze-emotional-journey", async (c) => {
     console.log("Calling Clova for:", moodText.slice(0, 100));
 
     // 🔥 Call Clova AI
-    const analysis = await callClovaMood(moodText);
+    const analysis = await callClovaMood(moodText, "single");
 
     console.log("Detected emotional analysis:", analysis);
 
@@ -612,9 +655,6 @@ app.post("/make-server/analyze-emotional-journey", async (c) => {
       rebuild: moviesData?.[2] || null,
     };
 
-    // Optionally giữ thêm các trường cứng hoặc spectrum nếu cần
-    // journey.release.spectrum = {...}, ...
-
     return c.json(journey);
 
   } catch (err: any) {
@@ -629,61 +669,51 @@ app.post('/make-server/analyze-party-mood', async (c) => {
     const { members } = await c.req.json();
 
     if (!members || !Array.isArray(members) || members.length < 2) {
-      return c.text('At least 2 members required', 400);
+      return c.text("Party requires 2-4 members", 400);
     }
 
-    console.log('Analyzing party mood for', members.length, 'members');
+    // 👉 Convert members → moodTextGroup
+    const moodTextGroup = members
+      .map((m) => {
+        const main = `${m.name} đang cảm thấy ${m.mood}`;
+        const extra = m.moodText ? ` và chia sẻ rằng: "${m.moodText}"` : "";
+        return `- ${main}${extra}`;
+      })
+      .join("\n");
 
-    // Analyze each member's mood
-    const analyses = await Promise.all(
-      members.map(async (member: any) => ({
-        name: member.name,
-        analysis: await analyzeMoodText(member.moodText || ''),
-      }))
-    );
+    console.log("Calling Clova for:", moodTextGroup.slice(0, 150));
 
-    // Find common ground (simplified logic)
-    const primaryMoods = analyses.map(a => a.analysis.primary);
-    const avgIntensity = analyses.reduce((sum, a) => sum + a.analysis.intensity, 0) / analyses.length;
+    // 🔥 Call Clova AI
+    const analysis = await callClovaMood(moodTextGroup, "party");
 
-    console.log('Party mood analysis:', { primaryMoods, avgIntensity });
+    const top3 = analysis.top_3;
 
-    // Generate recommendations based on common ground
-    const recommendations = [
-      {
-        id: 1,
-        title: 'The Grand Budapest Hotel',
-        year: '2014',
-        poster: 'https://images.unsplash.com/photo-1628336707631-68131ca720c3?w=400',
-        vibes: ['Quirky', 'Colorful', 'Nostalgic'],
-        rating: 8.1,
-        matchScore: 92,
-        reason: `Phù hợp với mood của ${members.map((m: any) => m.name).join(', ')}. Câu chuyện độc đáo với phong cách hình ảnh đẹp mắt, cân bằng giữa hài hước và cảm xúc.`,
-      },
-      {
-        id: 2,
-        title: 'Parasite',
-        year: '2019',
-        poster: 'https://images.unsplash.com/photo-1655367574486-f63675dd69eb?w=400',
-        vibes: ['Thrilling', 'Dark Comedy', 'Social'],
-        rating: 8.5,
-        matchScore: 88,
-        reason: 'Kết hợp hài hước đen và kịch tính, phù hợp cho những ai muốn trải nghiệm cảm xúc phong phú và sâu sắc.',
-      },
-    ];
-
-    // Customize based on group mood
-    if (primaryMoods.includes('happy') && avgIntensity > 0.7) {
-      recommendations[0].matchScore = 95;
-      recommendations[0].reason = `Nhóm của bạn đang trong trạng thái tích cực! ${recommendations[0].reason}`;
+    if (!top3 || top3.length === 0) {
+      return c.text("No top_3 moods returned from AI", 500);
     }
 
-    return c.json({ recommendations });
-  } catch (error: any) {
-    console.error('Analyze party mood error:', error);
-    return c.text(error.message || 'Failed to analyze party mood', 500);
+    // ⭐ Party mode chỉ lấy 2 phim
+    const { data: moviesData, error: moviesError } = await supabase
+      .from('movies')
+      .select('id, title, year, genre, poster_url, movie_overview, rating, mood')
+      .overlaps('mood', top3)
+      .order('rating', { ascending: false })
+      .limit(2);
+
+    if (moviesError) throw moviesError;
+
+    // ⭐ Output mới: mảng 2 phim
+    return c.json({
+      recommendations: moviesData ?? []
+    });
+
+  } catch (err: any) {
+    console.error("🔥 Party mode error:", err);
+    return c.text(err.message || "Failed to analyze party mood", 500);
   }
 });
+
+
 
 // Character Match - AI analysis
 app.post('/make-server/analyze-character-match', async (c) => {
