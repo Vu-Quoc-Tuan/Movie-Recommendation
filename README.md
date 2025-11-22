@@ -15,7 +15,13 @@ Tạo file `.env` trong thư mục gốc với các biến sau:
 SUPABASE_URL=https://wuvynyiopwzwtesbiojf.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 CLOVA_API_KEY=your_clova_api_key_here
-TMDB_API_KEY=your_TMDB_API_KEY_here
+TMDB_API_KEY=your_tmdb_api_key_here
+SUPABASE_PROJECT_ID=your_supabase_project_id_here
+SUPABASE_PUBLIC_ANON_KEY=your_supabase_anon_key_here
+SUPABASE_DB_URL=your_supabase_database_url_here
+VITE_SUPABASE_PROJECT_ID=your_supabase_project_id_here
+VITE_SUPABASE_PUBLIC_ANON_KEY=your_supabase_anon_key_here
+
 ```
 
 
