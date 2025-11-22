@@ -2,6 +2,8 @@
 
 An intelligent movie recommendation application based on user emotions and moods, using AI to analyze and suggest suitable movies.
 
+**Live Demo**: [https://north2south-tech.lecambang.id.vn/](https://north2south-tech.lecambang.id.vn/)
+
 ## Key Features
 
 -  **Emotion Analysis**: Uses AI (CLOVA) to analyze mood and suggest appropriate movies
