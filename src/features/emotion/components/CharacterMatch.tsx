@@ -3,12 +3,14 @@ import { Sparkles, User, Loader2 } from 'lucide-react';
 import { ImageWithFallback } from '../../../components/shared/ImageWithFallback';
 import { EmotionSpectrum } from './EmotionSpectrum';
 import { CharacterMatchResult } from "../types/emotion.types";
-import { analyzeCharacterMatch } from "../api/emotionApi";
+import { analyzeCharacterMatch, transcribeAudio } from "../api/emotionApi";
 import generateRandomSpectrum from '../../../lib/helper/randomSpectrum';
+import { AudioRecorder } from '../../../components/AudioRecorder';
 
 export function CharacterMatch() {
   const [moodText, setMoodText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [result, setResult] = useState<CharacterMatchResult | null>(null);
 
   const examples = [
@@ -16,6 +18,21 @@ export function CharacterMatch() {
     'Tôi đang cảm thấy bối rối vì phải đưa ra quyết định quan trọng nhưng không biết nên chọn con đường nào.',
     'Cuộc sống của tôi đang quá nhàm chán, tôi muốn thoát ra khỏi vòng lặp hàng ngày và khám phá điều gì đó mới mẻ.',
   ];
+
+  const handleRecordingComplete = async (blob: Blob) => {
+    setIsProcessingAudio(true);
+    try {
+      const { text } = await transcribeAudio(blob);
+      if (text) {
+        setMoodText(prev => (prev ? `${prev} ${text}` : text));
+      }
+    } catch (error) {
+      console.error('Error transcribing audio:', error);
+      alert('Không thể nhận dạng giọng nói. Vui lòng thử lại.');
+    } finally {
+      setIsProcessingAudio(false);
+    }
+  };
 
   const handleAnalyze = async () => {
     if (!moodText.trim()) return;
@@ -138,13 +155,21 @@ export function CharacterMatch() {
             <label className="block mb-3">
               Bạn đang cảm thấy thế nào? Hoàn cảnh của bạn ra sao?
             </label>
-            <textarea
-              value={moodText}
-              onChange={(e) => setMoodText(e.target.value)}
-              placeholder="Hãy chia sẻ về cảm xúc, suy nghĩ, hoặc tình huống hiện tại của bạn..."
-              className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none min-h-[150px] resize-y"
-              maxLength={500}
-            />
+            <div className="relative">
+              <textarea
+                value={moodText}
+                onChange={(e) => setMoodText(e.target.value)}
+                placeholder="Hãy chia sẻ về cảm xúc, suy nghĩ, hoặc tình huống hiện tại của bạn..."
+                className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none min-h-[150px] resize-y pr-16"
+                maxLength={500}
+              />
+              <div className="absolute bottom-4 right-4">
+                <AudioRecorder
+                  onRecordingComplete={handleRecordingComplete}
+                  isProcessing={isProcessingAudio}
+                />
+              </div>
+            </div>
             <div className="flex justify-between items-center mt-2">
               <span className="text-xs text-gray-500 dark:text-gray-400">
                 {moodText.length}/500 ký tự

@@ -4,8 +4,8 @@ import type {
     PartyMoodMember,
     PartyMoodResponse,
 } from '../types/emotion.types';
-import {getApiEndpoint} from "../../../lib/api/apiClient";
-import {SUPABASE_PUBLIC_ANON_KEY} from "../../../lib/supabase/config";
+import { getApiEndpoint } from "../../../lib/api/apiClient";
+import { SUPABASE_PUBLIC_ANON_KEY } from "../../../lib/supabase/config";
 
 /**
  * Gọi API phân tích liệu trình cảm xúc từ văn bản
@@ -65,6 +65,29 @@ export async function analyzePartyMood(members: PartyMoodMember[]): Promise<Part
     if (!response.ok) {
         const error = await response.text();
         throw new Error(error || 'Failed to analyze party mood');
+    }
+
+    return response.json();
+}
+
+/**
+ * Gọi API chuyển đổi giọng nói thành văn bản (STT)
+ */
+export async function transcribeAudio(audioBlob: Blob): Promise<{ text: string }> {
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'recording.wav');
+
+    const response = await fetch(getApiEndpoint('/stt'), {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${SUPABASE_PUBLIC_ANON_KEY}`,
+        },
+        body: formData,
+    });
+
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Failed to transcribe audio');
     }
 
     return response.json();

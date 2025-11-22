@@ -10,6 +10,11 @@ import * as jose from 'npm:jose';
 
 import charactorAnalyze from "../../../src/lib/api/aiAnalysis.ts";
 import { apiHelper } from "../../../src/lib/api/api_score.ts";
+import { speedToTextAPI } from "../../../src/lib/api/apiSTT.ts";
+
+
+
+
 
 const app = new Hono();
 
@@ -810,6 +815,34 @@ app.post('/make-server/analyze-character-match', async (c) => {
   }
 });
 
+// ===== STT ROUTE =====
+
+app.post('/make-server/stt', async (c) => {
+  try {
+    console.log('STT request received');
+    const body = await c.req.parseBody();
+    const file = body['audio'];
+
+    if (!file || !(file instanceof File)) {
+      return c.text('Audio file is required', 400);
+    }
+
+    console.log('Audio file received:', file.name, file.type, file.size);
+
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await speedToTextAPI(arrayBuffer);
+
+    if (!result) {
+      return c.json({ error: 'STT failed or returned no text' }, 500);
+    }
+
+    console.log('CLOVA Response:', result);
+    return c.json(result);
+  } catch (error: any) {
+    console.error('STT Error:', error);
+    return c.json({ error: error.message || 'Internal Server Error' }, 500);
+  }
+});
 
 // ===== RECOMMENDATION ROUTES =====
 

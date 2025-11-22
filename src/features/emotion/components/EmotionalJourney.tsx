@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { ArrowRight, Heart, Sparkles, Loader2 } from 'lucide-react';
 import { EmotionSpectrum } from './EmotionSpectrum';
 import { ImageWithFallback } from '../../../components/shared/ImageWithFallback';
-import { analyzeEmotionalJourney } from "../api/emotionApi";
+import { analyzeEmotionalJourney, transcribeAudio } from "../api/emotionApi";
 import generateRandomSpectrum from '../../../lib/helper/randomSpectrum';
+import { AudioRecorder } from '../../../components/AudioRecorder';
 
 
 const moods = [
@@ -59,8 +60,24 @@ export function EmotionalJourney() {
   const [moodTarget, setMoodTarget] = useState('');
   const [moodText, setMoodText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [aiResults, setAiResults] = useState<any>(null);
+
+  const handleRecordingComplete = async (blob: Blob) => {
+    setIsProcessingAudio(true);
+    try {
+      const { text } = await transcribeAudio(blob);
+      if (text) {
+        setMoodText(prev => (prev ? `${prev} ${text}` : text));
+      }
+    } catch (error) {
+      console.error('Error transcribing audio:', error);
+      alert('Không thể nhận dạng giọng nói. Vui lòng thử lại.');
+    } finally {
+      setIsProcessingAudio(false);
+    }
+  };
 
   const handleStart = async () => {
     if (moodNow && moodTarget) {
@@ -290,13 +307,21 @@ export function EmotionalJourney() {
                 <label className="block mb-3">
                   Hãy chia sẻ về cảm xúc của bạn
                 </label>
-                <textarea
-                  value={moodText}
-                  onChange={(e) => setMoodText(e.target.value)}
-                  placeholder="Ví dụ: Hôm nay tôi vừa nhặt được tiền và trả lại người bị mất, tôi cảm thấy rất vui, tự hào về bản thân mình..."
-                  className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none min-h-[120px] resize-y"
-                  maxLength={500}
-                />
+                <div className="relative">
+                  <textarea
+                    value={moodText}
+                    onChange={(e) => setMoodText(e.target.value)}
+                    placeholder="Ví dụ: Hôm nay tôi vừa nhặt được tiền và trả lại người bị mất, tôi cảm thấy rất vui, tự hào về bản thân mình..."
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none min-h-[120px] resize-y pr-16"
+                    maxLength={500}
+                  />
+                  <div className="absolute bottom-4 right-4">
+                    <AudioRecorder
+                      onRecordingComplete={handleRecordingComplete}
+                      isProcessing={isProcessingAudio}
+                    />
+                  </div>
+                </div>
                 <div className="flex justify-between items-center mt-2">
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     AI sẽ phân tích cảm xúc và gợi ý liệu trình phù hợp
