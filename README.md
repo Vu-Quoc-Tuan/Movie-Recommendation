@@ -64,7 +64,7 @@ npx tsx seed/movies.ts
 #### 3. Chạy server Deno (làm trung gian kết nối Supabase)
 
 ```bash
-deno run -A src/supabase/functions/server/index.tsx
+deno run -A server/functions/make-server/index.tsx
 ```
 
 #### 4. Chạy frontend

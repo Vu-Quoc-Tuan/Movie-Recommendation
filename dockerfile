@@ -14,7 +14,7 @@
   ENV NODE_ENV=production
   
   # Hardcode Vite env vars
-  ARG VITE_API_URL=http://server:8000/api
+  ARG VITE_API_URL=/api
 
   ENV NODE_ENV=production \
       VITE_API_URL=${VITE_API_URL} \
