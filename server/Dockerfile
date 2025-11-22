@@ -5,6 +5,7 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
+
 # Copy package files
 COPY package*.json ./
 COPY tsconfig*.json ./
@@ -14,7 +15,15 @@ COPY nest-cli.json ./
 RUN npm ci
 
 # Copy source code
-COPY . .
+COPY src ./src
+
+# Copy supabase package files và install dependencies
+COPY supabase/package.json supabase/package-lock.json ./supabase/
+RUN cd supabase && npm ci
+
+# Copy supabase source files (migrations, seed, etc.)
+COPY supabase ./supabase
+
 ENV NODE_ENV=production
 # Build application
 RUN npm run build
