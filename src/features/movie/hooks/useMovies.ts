@@ -24,6 +24,7 @@ export function useMovies(options: UseMoviesOptions = {}) {
         setLoading(true);
         setError(null);
         try {
+            console.log(filters)
             const newMovies = await fetchMovies(filters, searchQuery, pageNum);
 
             if (pageNum === 1) {

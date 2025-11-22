@@ -46,7 +46,7 @@ export function PartyMode() {
   };
 
   const handleFind = async () => {
-    // Kiểm tra dữ liệu hợp lệ trước
+
     const allFilled =
       mode === 'buttons'
         ? members.every(m => m.name && m.mood)
@@ -69,7 +69,6 @@ export function PartyMode() {
 
       // Lưu kết quả trả về
       setAiRecommendations(journey.recommendations || []);
-      console.log(journey);
 
       setShowResults(true);
     } catch (error) {

@@ -24,12 +24,12 @@ export function MovieFilters({ filters, onChange }: FilterProps) {
   ];
 
   const regions = [
-    { label: '🇰🇷 Hàn Quốc', value: 'KR' },
-    { label: '🇯🇵 Nhật Bản', value: 'JP' },
-    { label: '🇺🇸 Mỹ', value: 'US' },
-    { label: '🇪🇺 Châu Âu', value: 'EU' },
-    { label: '🇻🇳 Việt Nam', value: 'VN' },
-    { label: '🇨🇳 Trung Quốc', value: 'CN' },
+    { label: '🇰🇷 Hàn Quốc', value: 'Hàn Quốc' },
+    { label: '🇯🇵 Nhật Bản', value: 'Nhật Bản' },
+    { label: '🇺🇸 Mỹ', value: 'Mỹ' },
+    { label: '🇪🇺 Châu Âu', value: 'Châu ÂU' },
+    { label: '🇻🇳 Việt Nam', value: 'Việt Nam' },
+    { label: '🇨🇳 Trung Quốc', value: 'Trung Quốc' },
   ];
 
   const comfortOptions = [
@@ -48,6 +48,7 @@ export function MovieFilters({ filters, onChange }: FilterProps) {
   ];
 
   const toggleArrayFilter = (key: string, value: string) => {
+    console.log("key", key, "value", value)
     const current = filters[key] || [];
     const newValue = current.includes(value)
       ? current.filter((v: string) => v !== value)
@@ -68,11 +69,10 @@ export function MovieFilters({ filters, onChange }: FilterProps) {
             <button
               key={vibe}
               onClick={() => toggleArrayFilter('vibes', vibe)}
-              className={`px-4 py-2 rounded-full text-sm transition-all ${
-                filters.vibes.includes(vibe)
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
+              className={`px-4 py-2 rounded-full text-sm transition-all ${filters.vibes.includes(vibe)
+                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
             >
               {vibe}
             </button>
@@ -88,11 +88,10 @@ export function MovieFilters({ filters, onChange }: FilterProps) {
             <button
               key={genre}
               onClick={() => toggleArrayFilter('genres', genre)}
-              className={`px-4 py-2 rounded-full text-sm transition-all ${
-                filters.genres.includes(genre)
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
+              className={`px-4 py-2 rounded-full text-sm transition-all ${filters.genres.includes(genre)
+                ? 'bg-purple-500 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
             >
               {genre}
             </button>
@@ -132,11 +131,10 @@ export function MovieFilters({ filters, onChange }: FilterProps) {
             <button
               key={duration.value}
               onClick={() => toggleArrayFilter('duration', duration.value)}
-              className={`px-4 py-2 rounded-full text-sm transition-all ${
-                filters.duration.includes(duration.value)
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
+              className={`px-4 py-2 rounded-full text-sm transition-all ${filters.duration.includes(duration.value)
+                ? 'bg-purple-500 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
             >
               {duration.label}
             </button>
@@ -152,11 +150,10 @@ export function MovieFilters({ filters, onChange }: FilterProps) {
             <button
               key={region.value}
               onClick={() => toggleArrayFilter('regions', region.value)}
-              className={`px-4 py-2 rounded-full text-sm transition-all ${
-                filters.regions.includes(region.value)
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
+              className={`px-4 py-2 rounded-full text-sm transition-all ${filters.regions.includes(region.value)
+                ? 'bg-purple-500 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
             >
               {region.label}
             </button>
@@ -172,11 +169,10 @@ export function MovieFilters({ filters, onChange }: FilterProps) {
             <button
               key={rating}
               onClick={() => onChange({ ...filters, ratingMin: rating })}
-              className={`px-4 py-2 rounded-lg text-sm transition-all ${
-                filters.ratingMin === rating
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm transition-all ${filters.ratingMin === rating
+                ? 'bg-purple-500 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
             >
               {rating}+
             </button>
@@ -196,11 +192,10 @@ export function MovieFilters({ filters, onChange }: FilterProps) {
             <button
               key={option.value}
               onClick={() => toggleArrayFilter('comfortFlags', option.value)}
-              className={`px-4 py-2 rounded-full text-sm transition-all ${
-                filters.comfortFlags.includes(option.value)
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
+              className={`px-4 py-2 rounded-full text-sm transition-all ${filters.comfortFlags.includes(option.value)
+                ? 'bg-green-500 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
             >
               {option.label}
             </button>
