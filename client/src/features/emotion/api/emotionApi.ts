@@ -65,3 +65,23 @@ export async function analyzePartyMood(members: PartyMoodMember[]): Promise<Part
 
     return response.json();
 }
+
+/**
+ * Gọi API chuyển đổi giọng nói thành văn bản (STT)
+ */
+export async function transcribeAudio(audioBlob: Blob): Promise<{ text: string }> {
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'recording.wav');
+
+    const response = await fetch(getApiEndpoint('stt'), {
+        method: 'POST',
+        body: formData,
+    });
+
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Failed to transcribe audio');
+    }
+
+    return response.json();
+}

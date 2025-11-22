@@ -29,6 +29,7 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@supabase/supabase-js": "^2.84.0",
+    "@types/multer": "^2.0.0",
     "bcryptjs": "^3.0.3",
     "jose": "^6.1.2",
     "pg": "^8.16.3",
