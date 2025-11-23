@@ -1,10 +1,10 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import {AnalyzeEmotionalJourneyDto} from "./dto/analyze-emotional-journey.dto.js";
-import {AnalyzePartyMoodDto} from "./dto/analyze-party-mood.dto.js";
-import {AnalyzeCharacterMatchDto} from "./dto/analyze-character-match.dto.js";
-import {ClovaAIService} from "../common/ai/clova-ai.service.js";
-import {EmbeddingService} from "../common/ai/embedding.service.js";
-import {SupabaseService} from "../common/supabase/supabase.service.js";
+import { AnalyzeEmotionalJourneyDto } from "./dto/analyze-emotional-journey.dto.js";
+import { AnalyzePartyMoodDto } from "./dto/analyze-party-mood.dto.js";
+import { AnalyzeCharacterMatchDto } from "./dto/analyze-character-match.dto.js";
+import { ClovaAIService } from "../common/ai/clova-ai.service.js";
+import { EmbeddingService } from "../common/ai/embedding.service.js";
+import { SupabaseService } from "../common/supabase/supabase.service.js";
 
 
 @Injectable()
@@ -13,7 +13,7 @@ export class AiService {
         private readonly clovaAI: ClovaAIService,
         private readonly embeddingService: EmbeddingService,
         private readonly supabaseService: SupabaseService,
-    ) {}
+    ) { }
 
     async charactorAnalyze(moodText: string): Promise<any> {
         const embeddingInput = await this.embeddingService.embeddingAPI(moodText);
@@ -190,7 +190,7 @@ export class AiService {
         // Query Supabase for movie details
         const { data: movieData, error: movieError } = await supabase
             .from('movies')
-            .select('title, year, poster_url, rating')
+            .select('title, year, poster_url, rating, mood')
             .eq('id', bestMatch.movieId)
             .single();
 

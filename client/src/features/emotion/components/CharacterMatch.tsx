@@ -4,7 +4,21 @@ import { ImageWithFallback } from '../../../components/shared/ImageWithFallback'
 import { EmotionSpectrum } from './EmotionSpectrum';
 import { CharacterMatchResult } from "../types/emotion.types";
 import { analyzeCharacterMatch } from "../api/emotionApi";
-import generateRandomSpectrum from '../../../lib/helper/randomSpectrum';
+
+function generateRandomSpectrum(labels: string[]) {
+  if (!labels) return {};
+
+  const spectrum: { [key: string]: number } = {};
+
+  for (const label of labels) {
+    // Random từ 70 đến 90
+    const randomValue = Math.floor(Math.random() * 21) + 70;
+    spectrum[label] = randomValue;
+  }
+
+  return spectrum;
+}
+
 
 export function CharacterMatch() {
   const [moodText, setMoodText] = useState('');
@@ -90,7 +104,7 @@ export function CharacterMatch() {
 
               <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-6">
                 <h4 className="text-sm mb-3">Emotion Spectrum</h4>
-                <EmotionSpectrum spectrum={generateRandomSpectrum()} />
+                <EmotionSpectrum spectrum={generateRandomSpectrum(result.movie.mood)} />
               </div>
 
               <div className="mb-6">
