@@ -66,8 +66,6 @@
             "build": "vite build",
             "migrate": "npm --prefix ../server/supabase run migrate",
             "migrate:setup": "npm --prefix ../server/supabase run setup",
-            "seed": "npm --prefix ../server/supabase run seed",
-            "create-mood": "tsx src/backup_mood/createMood.tsx",
-            "create-embedding": "tsx src/backup_mood/createEmbedding.tsx"
+            "seed": "npm --prefix ../server/supabase run seed"
       }
 }

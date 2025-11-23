@@ -1,23 +1,10 @@
 import { useState } from 'react';
 import { ArrowRight, Heart, Sparkles, Loader2 } from 'lucide-react';
 import { EmotionSpectrum } from './EmotionSpectrum';
-import { ImageWithFallback } from '../../../components/shared/ImageWithFallback';
-import { analyzeEmotionalJourney } from "../api/emotionApi";
+import { analyzeEmotionalJourney, transcribeAudio } from "../api/emotionApi";
 import generateRandomSpectrum from '../../../lib/helper/randomSpectrum';
+import {AudioRecorder} from "./AudioRecorder";
 
-function generateRandomSpectrum(labels: string[]) {
-  if (!labels) return {};
-
-  const spectrum: { [key: string]: number } = {};
-
-  for (const label of labels) {
-    // Random từ 70 đến 90
-    const randomValue = Math.floor(Math.random() * 21) + 70;
-    spectrum[label] = randomValue;
-  }
-
-  return spectrum;
-}
 
 
 const moods = [
@@ -67,14 +54,31 @@ const journeyResults = {
   },
 };
 
+
 export function EmotionalJourney() {
   const [mode, setMode] = useState<'buttons' | 'text'>('buttons');
   const [moodNow, setMoodNow] = useState('');
   const [moodTarget, setMoodTarget] = useState('');
   const [moodText, setMoodText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [aiResults, setAiResults] = useState<any>(null);
+
+  const handleRecordingComplete = async (blob: Blob) => {
+    setIsProcessingAudio(true);
+    try {
+      const { text } = await transcribeAudio(blob);
+      if (text) {
+        setMoodText(prev => (prev ? `${prev} ${text}` : text));
+      }
+    } catch (error) {
+      console.error('Error transcribing audio:', error);
+      alert('Không thể nhận dạng giọng nói. Vui lòng thử lại.');
+    } finally {
+      setIsProcessingAudio(false);
+    }
+  };
 
   const handleStart = async () => {
     if (moodNow && moodTarget) {
@@ -82,16 +86,12 @@ export function EmotionalJourney() {
       try {
         const data = await analyzeEmotionalJourney(moodNow + moodTarget);
 
-        console.log(data.mood)
-
         // Gán spectrum random vào từng step nếu chưa có
         const aiWithSpectrum = {
-          release: { ...data.release, spectrum: generateRandomSpectrum(data.release.mood ?? []) },
-          reflect: { ...data.reflect, spectrum: generateRandomSpectrum(data.reflect.mood ?? []) },
-          rebuild: { ...data.rebuild, spectrum: generateRandomSpectrum(data.rebuild.mood ?? []) },
+          release: { ...data.release, spectrum: generateRandomSpectrum() },
+          reflect: { ...data.reflect, spectrum: generateRandomSpectrum() },
+          rebuild: { ...data.rebuild, spectrum: generateRandomSpectrum() },
         };
-
-        console.log(aiWithSpectrum)
 
         setAiResults(aiWithSpectrum);
         setShowResults(true);
@@ -138,215 +138,223 @@ export function EmotionalJourney() {
   if (showResults) {
     const results = aiResults || journeyResults;
     const moodDisplay = aiResults
-      ? `AI phân tích: "${moodText.slice(0, 60)}${moodText.length > 60 ? '...' : ''}"`
-      : `${moods.find(m => m.value === moodNow)?.label} → ${targetMoods.find(m => m.value === moodTarget)?.label}`;
+        ? `AI phân tích: "${moodText.slice(0, 60)}${moodText.length > 60 ? '...' : ''}"`
+        : `${moods.find(m => m.value === moodNow)?.label} → ${targetMoods.find(m => m.value === moodTarget)?.label}`;
 
     return (
-      <div className="space-y-8">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl">✨ Liệu trình cảm xúc của bạn</h2>
-            <button
-              onClick={reset}
-              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors"
-            >
-              Làm lại
-            </button>
+        <div className="space-y-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl">✨ Liệu trình cảm xúc của bạn</h2>
+              <button
+                  onClick={reset}
+                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              >
+                Làm lại
+              </button>
+            </div>
+            <div className="flex items-center space-x-4 text-gray-600 dark:text-gray-300">
+              {aiResults ? (
+                  <div className="flex items-center space-x-2">
+                    <Sparkles className="w-5 h-5 text-purple-500" />
+                    <span className="text-sm">{moodDisplay}</span>
+                  </div>
+              ) : (
+                  <>
+                    <span>{moods.find(m => m.value === moodNow)?.label}</span>
+                    <ArrowRight className="w-5 h-5" />
+                    <span>{targetMoods.find(m => m.value === moodTarget)?.label}</span>
+                  </>
+              )}
+            </div>
           </div>
-          <div className="flex items-center space-x-4 text-gray-600 dark:text-gray-300">
-            {aiResults ? (
-              <div className="flex items-center space-x-2">
-                <Sparkles className="w-5 h-5 text-purple-500" />
-                <span className="text-sm">{moodDisplay}</span>
-              </div>
-            ) : (
-              <>
-                <span>{moods.find(m => m.value === moodNow)?.label}</span>
-                <ArrowRight className="w-5 h-5" />
-                <span>{targetMoods.find(m => m.value === moodTarget)?.label}</span>
-              </>
-            )}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Release */}
+            <JourneyCard
+                step="Release"
+                stepNumber="1"
+                description="Giải phóng cảm xúc hiện tại"
+                movie={results.release}
+                color="from-red-500 to-orange-500"
+            />
+
+            {/* Reflect */}
+            <JourneyCard
+                step="Reflect"
+                stepNumber="2"
+                description="Suy ngẫm và chấp nhận"
+                movie={results.reflect}
+                color="from-blue-500 to-purple-500"
+            />
+
+            {/* Rebuild */}
+            <JourneyCard
+                step="Rebuild"
+                stepNumber="3"
+                description="Xây dựng lại cảm xúc"
+                movie={results.rebuild}
+                color="from-green-500 to-teal-500"
+            />
           </div>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Release */}
-          <JourneyCard
-            step="Release"
-            stepNumber="1"
-            description="Giải phóng cảm xúc hiện tại"
-            movie={results.release}
-            color="from-red-500 to-orange-500"
-          />
-
-          {/* Reflect */}
-          <JourneyCard
-            step="Reflect"
-            stepNumber="2"
-            description="Suy ngẫm và chấp nhận"
-            movie={results.reflect}
-            color="from-blue-500 to-purple-500"
-          />
-
-          {/* Rebuild */}
-          <JourneyCard
-            step="Rebuild"
-            stepNumber="3"
-            description="Xây dựng lại cảm xúc"
-            movie={results.rebuild}
-            color="from-green-500 to-teal-500"
-          />
-        </div>
-      </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl shadow-lg p-8">
-        <div className="text-center mb-8">
-          <div className="inline-block p-4 bg-white dark:bg-gray-800 rounded-full mb-4">
-            <Heart className="w-12 h-12 text-purple-500" />
-          </div>
-          <h1 className="text-3xl mb-3">Liệu trình Cảm xúc</h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Hành trình 3 bước để điều hướng cảm xúc của bạn: Release → Reflect → Rebuild
-          </p>
-        </div>
-
-        <div className="space-y-6">
-          {/* Mode Toggle */}
-          <div className="flex items-center justify-center space-x-2 pb-4 border-b border-gray-200 dark:border-gray-700">
-            <button
-              onClick={() => setMode('buttons')}
-              className={`px-6 py-2 rounded-lg transition-all ${mode === 'buttons'
-                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                }`}
-            >
-              Chọn mood
-            </button>
-            <button
-              onClick={() => setMode('text')}
-              className={`px-6 py-2 rounded-lg transition-all flex items-center space-x-2 ${mode === 'text'
-                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                }`}
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Mô tả bằng lời</span>
-            </button>
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl shadow-lg p-8">
+          <div className="text-center mb-8">
+            <div className="inline-block p-4 bg-white dark:bg-gray-800 rounded-full mb-4">
+              <Heart className="w-12 h-12 text-purple-500" />
+            </div>
+            <h1 className="text-3xl mb-3">Liệu trình Cảm xúc</h1>
+            <p className="text-gray-600 dark:text-gray-300">
+              Hành trình 3 bước để điều hướng cảm xúc của bạn: Release → Reflect → Rebuild
+            </p>
           </div>
 
-          {mode === 'buttons' ? (
-            <>
-              {/* Current Mood */}
-              <div>
-                <label className="block mb-3">
-                  Bạn đang cảm thấy thế nào?
-                </label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {moods.map((mood) => (
-                    <button
-                      key={mood.value}
-                      onClick={() => setMoodNow(mood.value)}
-                      className={`p-4 rounded-xl transition-all text-left ${moodNow === mood.value
-                        ? 'ring-2 ring-purple-500 shadow-lg scale-105'
-                        : 'hover:scale-105'
-                        } ${mood.color}`}
-                    >
-                      <div>{mood.label}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Target Mood */}
-              <div>
-                <label className="block mb-3">
-                  Bạn muốn cảm thấy như thế nào?
-                </label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {targetMoods.map((mood) => (
-                    <button
-                      key={mood.value}
-                      onClick={() => setMoodTarget(mood.value)}
-                      className={`p-4 bg-white dark:bg-gray-800 rounded-xl transition-all text-left hover:scale-105 ${moodTarget === mood.value
-                        ? 'ring-2 ring-purple-500 shadow-lg scale-105'
-                        : ''
-                        }`}
-                    >
-                      <div>{mood.label}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Start Button */}
+          <div className="space-y-6">
+            {/* Mode Toggle */}
+            <div className="flex items-center justify-center space-x-2 pb-4 border-b border-gray-200 dark:border-gray-700">
               <button
-                onClick={handleStart}
-                disabled={!moodNow || !moodTarget || loading}
-                className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg flex items-center justify-center space-x-2"
+                  onClick={() => setMode('buttons')}
+                  className={`px-6 py-2 rounded-lg transition-all ${mode === 'buttons'
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                  }`}
               >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Đang phân tích...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-5 h-5" />
-                    <span>Phân tích & Tạo liệu trình</span>
-                  </>
-                )}
+                Chọn mood
               </button>
-            </>
-          ) : (
-            <>
-              {/* Text Mode */}
-              <div>
-                <label className="block mb-3">
-                  Hãy chia sẻ về cảm xúc của bạn
-                </label>
-                <textarea
-                  value={moodText}
-                  onChange={(e) => setMoodText(e.target.value)}
-                  placeholder="Ví dụ: Hôm nay tôi vừa nhặt được tiền và trả lại người bị mất, tôi cảm thấy rất vui, tự hào về bản thân mình..."
-                  className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none min-h-[120px] resize-y"
-                  maxLength={500}
-                />
-                <div className="flex justify-between items-center mt-2">
+              <button
+                  onClick={() => setMode('text')}
+                  className={`px-6 py-2 rounded-lg transition-all flex items-center space-x-2 ${mode === 'text'
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                  }`}
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Mô tả bằng lời</span>
+              </button>
+            </div>
+
+            {mode === 'buttons' ? (
+                <>
+                  {/* Current Mood */}
+                  <div>
+                    <label className="block mb-3">
+                      Bạn đang cảm thấy thế nào?
+                    </label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {moods.map((mood) => (
+                          <button
+                              key={mood.value}
+                              onClick={() => setMoodNow(mood.value)}
+                              className={`p-4 rounded-xl transition-all text-left ${moodNow === mood.value
+                                  ? 'ring-2 ring-purple-500 shadow-lg scale-105'
+                                  : 'hover:scale-105'
+                              } ${mood.color}`}
+                          >
+                            <div>{mood.label}</div>
+                          </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Target Mood */}
+                  <div>
+                    <label className="block mb-3">
+                      Bạn muốn cảm thấy như thế nào?
+                    </label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {targetMoods.map((mood) => (
+                          <button
+                              key={mood.value}
+                              onClick={() => setMoodTarget(mood.value)}
+                              className={`p-4 bg-white dark:bg-gray-800 rounded-xl transition-all text-left hover:scale-105 ${moodTarget === mood.value
+                                  ? 'ring-2 ring-purple-500 shadow-lg scale-105'
+                                  : ''
+                              }`}
+                          >
+                            <div>{mood.label}</div>
+                          </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Start Button */}
+                  <button
+                      onClick={handleStart}
+                      disabled={!moodNow || !moodTarget || loading}
+                      className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg flex items-center justify-center space-x-2"
+                  >
+                    {loading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>Đang phân tích...</span>
+                        </>
+                    ) : (
+                        <>
+                          <Sparkles className="w-5 h-5" />
+                          <span>Phân tích & Tạo liệu trình</span>
+                        </>
+                    )}
+                  </button>
+                </>
+            ) : (
+                <>
+                  {/* Text Mode */}
+                  <div>
+                    <label className="block mb-3">
+                      Hãy chia sẻ về cảm xúc của bạn
+                    </label>
+                    <div className="relative">
+                  <textarea
+                      value={moodText}
+                      onChange={(e) => setMoodText(e.target.value)}
+                      placeholder="Ví dụ: Hôm nay tôi vừa nhặt được tiền và trả lại người bị mất, tôi cảm thấy rất vui, tự hào về bản thân mình..."
+                      className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none min-h-[120px] resize-y pr-16"
+                      maxLength={500}
+                  />
+                      <div className="absolute bottom-4 right-4">
+                        <AudioRecorder
+                            onRecordingComplete={handleRecordingComplete}
+                            isProcessing={isProcessingAudio}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     AI sẽ phân tích cảm xúc và gợi ý liệu trình phù hợp
                   </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
                     {moodText.length}/500
                   </span>
-                </div>
-              </div>
+                    </div>
+                  </div>
 
-              <button
-                onClick={handleTextAnalysis}
-                disabled={!moodText.trim() || loading}
-                className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg flex items-center justify-center space-x-2"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Đang phân tích...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-5 h-5" />
-                    <span>Phân tích & Tạo liệu trình</span>
-                  </>
-                )}
-              </button>
-            </>
-          )}
+                  <button
+                      onClick={handleTextAnalysis}
+                      disabled={!moodText.trim() || loading}
+                      className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg flex items-center justify-center space-x-2"
+                  >
+                    {loading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>Đang phân tích...</span>
+                        </>
+                    ) : (
+                        <>
+                          <Sparkles className="w-5 h-5" />
+                          <span>Phân tích & Tạo liệu trình</span>
+                        </>
+                    )}
+                  </button>
+                </>
+            )}
+          </div>
         </div>
       </div>
-    </div>
   );
 }
 
@@ -354,61 +362,60 @@ function JourneyCard({ step, stepNumber, description, movie, color }: any) {
   if (!movie) return null;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700 ">
-      {/* Header với step và description */}
-      <div className={`bg-gradient-to-r ${color} p-4 text-white`}>
-        <div className="flex items-center space-x-3 mb-2">
-          <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center font-bold">
-            {stepNumber}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+        {/* Header với step và description */}
+        <div className={`bg-gradient-to-r ${color} p-4 text-white`}>
+          <div className="flex items-center space-x-3 mb-2">
+            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center font-bold">
+              {stepNumber}
+            </div>
+            <h3 className="text-xl font-semibold">{step}</h3>
           </div>
-          <h3 className="text-xl font-semibold">{step}</h3>
-        </div>
-        <p className="text-sm text-white/90">{description}</p>
-      </div>
-
-      {/* Poster */}
-      <div className="p-4">
-        <div className="relative h-48 rounded-lg overflow-hidden mb-4 shadow-sm">
-          <img
-            src={movie.poster_url}
-            alt={movie.title}
-            className="w-full h-full object-cover object-center"
-          />
+          <p className="text-sm text-white/90">{description}</p>
         </div>
 
-        {/* Title & Year */}
-        <h4 className="text-lg font-semibold mb-10">{movie.title}</h4>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{movie.year}</p>
-
-        {/* Mood badges */}
-        {movie.mood && movie.mood.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-5">
-            {movie.genre.map((m: string) => (
-              <span
-                key={m}
-                className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full backdrop-blur-sm"
-              >
-                {m}
-              </span>
-            ))}
+        {/* Poster */}
+        <div className="p-4">
+          <div className="relative h-48 rounded-lg overflow-hidden mb-4 shadow-sm">
+            <img
+                src={movie.poster_url}
+                alt={movie.title}
+                className="w-full h-full object-cover object-center"
+            />
+            {/* Mood badges */}
+            {movie.mood && movie.mood.length > 0 && (
+                <div className="absolute top-2 left-2 flex flex-wrap gap-1">
+                  {movie.mood.map((m: string) => (
+                      <span
+                          key={m}
+                          className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full backdrop-blur-sm"
+                      >
+                  {m}
+                </span>
+                  ))}
+                </div>
+            )}
           </div>
-        )}
 
-        {/* Spectrum */}
-        {movie.spectrum && (
-          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 mb-3 mt-5">
-            <EmotionSpectrum spectrum={movie.spectrum} />
-          </div>
-        )}
+          {/* Title & Year */}
+          <h4 className="text-lg font-semibold mb-1">{movie.title}</h4>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{movie.year}</p>
 
-        {/* Overview */}
-        {movie.movie_overview && movie.movie_overview !== "Chưa có mô tả" && (
-          <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg p-3 border-l-2 border-purple-500">
-            <p className="text-sm italic">{movie.movie_overview}</p>
-          </div>
-        )}
+          {/* Spectrum */}
+          {movie.spectrum && (
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 mb-3">
+                <EmotionSpectrum spectrum={movie.spectrum} />
+              </div>
+          )}
+
+          {/* Overview */}
+          {movie.movie_overview && movie.movie_overview !== "Chưa có mô tả" && (
+              <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg p-3 border-l-2 border-purple-500">
+                <p className="text-sm italic">{movie.movie_overview}</p>
+              </div>
+          )}
+        </div>
       </div>
-    </div>
   );
 }
 
