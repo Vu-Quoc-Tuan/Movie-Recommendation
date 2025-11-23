@@ -54,6 +54,7 @@ const journeyResults = {
   },
 };
 
+
 export function EmotionalJourney() {
   const [mode, setMode] = useState<'buttons' | 'text'>('buttons');
   const [moodNow, setMoodNow] = useState('');
