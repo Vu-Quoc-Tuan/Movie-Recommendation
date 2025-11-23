@@ -3,7 +3,7 @@ import { Star, Sparkles } from 'lucide-react';
 import { EmotionSpectrum } from '../../emotion/components/EmotionSpectrum';
 import { MovieDetail } from './MovieDetail';
 import { ImageWithFallback } from '../../../components/shared/ImageWithFallback';
-import {Movie} from "../types/movie.types";
+import { Movie } from "../types/movie.types";
 
 interface MovieCardProps {
   movie: Movie;
@@ -54,9 +54,8 @@ export function MovieCard({ movie }: MovieCardProps) {
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{movie.year}</p>
 
           {/* Mini Emotion Spectrum */}
-          <div className="mb-3">
-            <EmotionSpectrum spectrum={movie.spectrum} mini />
-          </div>
+          <div className="mb-3"> <EmotionSpectrum spectrum={movie.spectrum} mini /> </div>
+
 
           {/* Vibe Tags */}
           <div className="flex flex-wrap gap-1">

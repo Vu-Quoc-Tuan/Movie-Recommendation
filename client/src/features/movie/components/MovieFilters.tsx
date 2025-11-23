@@ -13,8 +13,8 @@ export function MovieFilters({ filters, onChange }: FilterProps) {
   ];
 
   const genres = [
-    'Romance', 'Drama', 'Comedy', 'Fantasy',
-    'Slice of Life', 'Thriller', 'Animation', 'Sci-Fi'
+    'Tình cảm', 'Chính kịch', 'Hài', 'Bí ẩn',
+    'Hình sự', 'Gây cấn', 'Gia đình', 'Khoa học viễn tưởng'
   ];
 
   const durations = [
@@ -48,7 +48,6 @@ export function MovieFilters({ filters, onChange }: FilterProps) {
   ];
 
   const toggleArrayFilter = (key: string, value: string) => {
-    console.log("key", key, "value", value)
     const current = filters[key] || [];
     const newValue = current.includes(value)
       ? current.filter((v: string) => v !== value)

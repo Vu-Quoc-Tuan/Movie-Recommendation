@@ -24,7 +24,6 @@ export function useMovies(options: UseMoviesOptions = {}) {
         setLoading(true);
         setError(null);
         try {
-            console.log(filters)
             const newMovies = await fetchMovies(filters, searchQuery, pageNum);
 
             if (pageNum === 1) {
@@ -64,6 +63,8 @@ export function useMovies(options: UseMoviesOptions = {}) {
             loadMovies(1);
         }
     }, [filters, searchQuery]); // Reload when filters/search change
+
+    console.log("hook", movies)
 
     return {
         movies,

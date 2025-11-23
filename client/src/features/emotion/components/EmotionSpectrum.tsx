@@ -1,54 +1,75 @@
+const colorPalette = [
+  "bg-blue-500",
+  "bg-orange-500",
+  "bg-green-500",
+  "bg-purple-500",
+  "bg-pink-500",
+  "bg-yellow-500",
+];
+
+const capitalize = (str: string) =>
+  str.charAt(0).toUpperCase() + str.slice(1);
+
+type SpectrumValue = number | { value: number; icon?: string };
+
 interface EmotionSpectrumProps {
-  spectrum: {
-    calm: number;
-    warm: number;
-    hopeful: number;
-  };
+  spectrum: Record<string, SpectrumValue>;
   mini?: boolean;
 }
 
-const emotionColors = {
-  calm: { bg: 'bg-blue-500', text: 'Calm' },
-  warm: { bg: 'bg-orange-500', text: 'Warm' },
-  hopeful: { bg: 'bg-green-500', text: 'Hopeful' },
-};
-
 export function EmotionSpectrum({ spectrum, mini = false }: EmotionSpectrumProps) {
-  const emotions = Object.entries(spectrum) as [keyof typeof spectrum, number][];
+  const spectrumEntries = Object.entries(spectrum);
 
   if (mini) {
     return (
       <div className="space-y-1">
-        {emotions.map(([emotion, value]) => (
-          <div key={emotion} className="flex items-center space-x-2">
-            <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-              <div
-                className={`h-full ${emotionColors[emotion].bg} transition-all`}
-                style={{ width: `${value}%` }}
-              />
+        {spectrumEntries.map(([emotion, val], index) => {
+          const color = colorPalette[index % colorPalette.length];
+          const value = typeof val === "number" ? val : val.value;
+          const icon = typeof val === "number" ? undefined : val.icon;
+
+          return (
+            <div key={emotion} className="flex items-center space-x-2">
+              {icon && <span>{icon}</span>}
+              <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${color} transition-all`}
+                  style={{ width: `${value}%` }}
+                />
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
-      {emotions.map(([emotion, value]) => (
-        <div key={emotion}>
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-sm">{emotionColors[emotion].text}</span>
-            <span className="text-sm text-gray-500 dark:text-gray-400">{value}%</span>
+      {spectrumEntries.map(([emotion, val], index) => {
+        const color = colorPalette[index % colorPalette.length];
+        const value = typeof val === "number" ? val : val.value;
+        const icon = typeof val === "number" ? undefined : val.icon;
+
+        return (
+          <div key={emotion}>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm flex items-center space-x-1">
+                {icon && <span>{icon}</span>}
+                <span>{capitalize(emotion)}</span>
+              </span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{value}%</span>
+            </div>
+
+            <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div
+                className={`h-full ${color} transition-all rounded-full`}
+                style={{ width: `${value}%` }}
+              />
+            </div>
           </div>
-          <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div
-              className={`h-full ${emotionColors[emotion].bg} transition-all rounded-full`}
-              style={{ width: `${value}%` }}
-            />
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

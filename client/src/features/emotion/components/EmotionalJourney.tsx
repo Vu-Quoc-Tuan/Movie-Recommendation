@@ -5,6 +5,20 @@ import { ImageWithFallback } from '../../../components/shared/ImageWithFallback'
 import { analyzeEmotionalJourney } from "../api/emotionApi";
 import generateRandomSpectrum from '../../../lib/helper/randomSpectrum';
 
+function generateRandomSpectrum(labels: string[]) {
+  if (!labels) return {};
+
+  const spectrum: { [key: string]: number } = {};
+
+  for (const label of labels) {
+    // Random từ 70 đến 90
+    const randomValue = Math.floor(Math.random() * 21) + 70;
+    spectrum[label] = randomValue;
+  }
+
+  return spectrum;
+}
+
 
 const moods = [
   { value: 'anxious', label: '😰 Lo lắng', color: 'bg-red-100 dark:bg-red-900/20' },
@@ -68,12 +82,16 @@ export function EmotionalJourney() {
       try {
         const data = await analyzeEmotionalJourney(moodNow + moodTarget);
 
+        console.log(data.mood)
+
         // Gán spectrum random vào từng step nếu chưa có
         const aiWithSpectrum = {
-          release: { ...data.release, spectrum: generateRandomSpectrum() },
-          reflect: { ...data.reflect, spectrum: generateRandomSpectrum() },
-          rebuild: { ...data.rebuild, spectrum: generateRandomSpectrum() },
+          release: { ...data.release, spectrum: generateRandomSpectrum(data.release.mood ?? []) },
+          reflect: { ...data.reflect, spectrum: generateRandomSpectrum(data.reflect.mood ?? []) },
+          rebuild: { ...data.rebuild, spectrum: generateRandomSpectrum(data.rebuild.mood ?? []) },
         };
+
+        console.log(aiWithSpectrum)
 
         setAiResults(aiWithSpectrum);
         setShowResults(true);
@@ -336,7 +354,7 @@ function JourneyCard({ step, stepNumber, description, movie, color }: any) {
   if (!movie) return null;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700 ">
       {/* Header với step và description */}
       <div className={`bg-gradient-to-r ${color} p-4 text-white`}>
         <div className="flex items-center space-x-3 mb-2">
@@ -356,28 +374,29 @@ function JourneyCard({ step, stepNumber, description, movie, color }: any) {
             alt={movie.title}
             className="w-full h-full object-cover object-center"
           />
-          {/* Mood badges */}
-          {movie.mood && movie.mood.length > 0 && (
-            <div className="absolute top-2 left-2 flex flex-wrap gap-1">
-              {movie.mood.map((m: string) => (
-                <span
-                  key={m}
-                  className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full backdrop-blur-sm"
-                >
-                  {m}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Title & Year */}
-        <h4 className="text-lg font-semibold mb-1">{movie.title}</h4>
+        <h4 className="text-lg font-semibold mb-10">{movie.title}</h4>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{movie.year}</p>
+
+        {/* Mood badges */}
+        {movie.mood && movie.mood.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-5">
+            {movie.genre.map((m: string) => (
+              <span
+                key={m}
+                className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full backdrop-blur-sm"
+              >
+                {m}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Spectrum */}
         {movie.spectrum && (
-          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 mb-3">
+          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 mb-3 mt-5">
             <EmotionSpectrum spectrum={movie.spectrum} />
           </div>
         )}

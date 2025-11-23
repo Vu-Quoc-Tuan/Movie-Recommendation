@@ -14,35 +14,35 @@ export async function fetchMovies(
   try {
     // Build query parameters
     const params = new URLSearchParams();
-    
+
     if (searchQuery) {
       params.append('search', searchQuery);
     }
-    
+
     if (filters.yearMin !== undefined) {
       params.append('yearMin', filters.yearMin.toString());
     }
-    
+
     if (filters.yearMax !== undefined) {
       params.append('yearMax', filters.yearMax.toString());
     }
-    
+
     if (filters.ratingMin !== undefined) {
       params.append('ratingMin', filters.ratingMin.toString());
     }
-    
+
     if (filters.genres && filters.genres.length > 0) {
       filters.genres.forEach(genre => params.append('genres', genre));
     }
-    
+
     if (filters.regions && filters.regions.length > 0) {
       filters.regions.forEach(region => params.append('regions', region));
     }
-    
+
     if (filters.sort) {
       params.append('sort', filters.sort);
     }
-    
+
     params.append('page', page.toString());
 
     const response = await fetch(`${getApiEndpoint('/movies')}?${params.toString()}`, {
@@ -58,7 +58,9 @@ export async function fetchMovies(
     }
 
     const data = await response.json();
-    
+
+    console.log("mo", data)
+
     // Transform DB data to Movie interface
     return (data || []).map(mapToMovie);
   } catch (error) {
