@@ -27,6 +27,7 @@ export function MovieCatalog() {
 
 
   useEffect(() => {
+    console.log("movies", movies)
     const handleScroll = () => {
       if (
         window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 &&
@@ -85,13 +86,10 @@ export function MovieCatalog() {
 
       {/* Movie Grid */}
       <div>
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4">
           <h2 className="text-xl">
             {searchQuery ? `Kết quả cho "${searchQuery}"` : 'Tất cả phim'}
           </h2>
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            {movies.length} phim
-          </span>
         </div>
 
         {loading && movies.length === 0 ? (

@@ -10,18 +10,27 @@ const colorPalette = [
 const capitalize = (str: string) =>
   str.charAt(0).toUpperCase() + str.slice(1);
 
+type SpectrumValue = number | { value: number; icon?: string };
 
-export function EmotionSpectrum({ spectrum, mini = false }) {
+interface EmotionSpectrumProps {
+  spectrum: Record<string, SpectrumValue>;
+  mini?: boolean;
+}
+
+export function EmotionSpectrum({ spectrum, mini = false }: EmotionSpectrumProps) {
   const spectrumEntries = Object.entries(spectrum);
 
   if (mini) {
     return (
       <div className="space-y-1">
-        {spectrumEntries.map(([emotion, value], index) => {
+        {spectrumEntries.map(([emotion, val], index) => {
           const color = colorPalette[index % colorPalette.length];
+          const value = typeof val === "number" ? val : val.value;
+          const icon = typeof val === "number" ? undefined : val.icon;
 
           return (
             <div key={emotion} className="flex items-center space-x-2">
+              {icon && <span>{icon}</span>}
               <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div
                   className={`h-full ${color} transition-all`}
@@ -37,13 +46,18 @@ export function EmotionSpectrum({ spectrum, mini = false }) {
 
   return (
     <div className="space-y-3">
-      {spectrumEntries.map(([emotion, value], index) => {
+      {spectrumEntries.map(([emotion, val], index) => {
         const color = colorPalette[index % colorPalette.length];
+        const value = typeof val === "number" ? val : val.value;
+        const icon = typeof val === "number" ? undefined : val.icon;
 
         return (
           <div key={emotion}>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm">{capitalize(emotion)}</span>
+              <span className="text-sm flex items-center space-x-1">
+                {icon && <span>{icon}</span>}
+                <span>{capitalize(emotion)}</span>
+              </span>
               <span className="text-sm text-gray-500 dark:text-gray-400">{value}%</span>
             </div>
 

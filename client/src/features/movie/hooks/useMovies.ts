@@ -64,6 +64,8 @@ export function useMovies(options: UseMoviesOptions = {}) {
         }
     }, [filters, searchQuery]); // Reload when filters/search change
 
+    console.log("hook", movies)
+
     return {
         movies,
         loading,
