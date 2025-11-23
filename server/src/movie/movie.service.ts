@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import {SupabaseService} from "../common/supabase/supabase.service.js";
-import {FetchMoviesDto} from "./dto/fetch-movies.dto.js";
+import { SupabaseService } from "../common/supabase/supabase.service.js";
+import { FetchMoviesDto } from "./dto/fetch-movies.dto.js";
 
 
 @Injectable()
 export class MovieService {
-  constructor(private readonly supabaseService: SupabaseService) {}
+  constructor(private readonly supabaseService: SupabaseService) { }
 
   async fetchMovies(fetchMoviesDto: FetchMoviesDto) {
     const {
@@ -41,15 +41,31 @@ export class MovieService {
     }
 
     // Filter by genre (assuming genre is an array column)
-    if (genres && genres.length > 0) {
-      // Use overlaps for array column
-      query = query.overlaps('genre', genres);
+    let genresArr: string[] = [];
+
+    if (Array.isArray(genres)) {
+      genresArr = genres;
+    } else if (typeof genres === 'string') {
+      genresArr = [genres];
     }
 
-    // Filter by country/region
-    if (regions && regions.length > 0) {
-      query = query.in('country', regions);
+    if (genresArr.length > 0) {
+      query = query.overlaps('genre', genresArr);
     }
+
+    // Filter by regions
+    let regionArr: string[] = [];
+
+    if (Array.isArray(regions)) {
+      regionArr = regions;
+    } else if (typeof regions === 'string') {
+      regionArr = [regions];
+    }
+
+    if (regionArr.length > 0) {
+      query = query.in('country', regionArr);
+    }
+
 
     // Sorting
     switch (sort) {
@@ -97,7 +113,7 @@ export class MovieService {
 
         // Get random movies excluding watched ones
         let query = supabase.from('movies').select('*');
-        
+
         if (watchedIds.length > 0) {
           const formattedIds = `(${watchedIds.map((id: string) => `"${id}"`).join(',')})`;
           query = query.not('id', 'in', formattedIds);

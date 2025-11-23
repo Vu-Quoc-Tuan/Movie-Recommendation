@@ -3,7 +3,7 @@ import { MovieCard } from './MovieCard';
 import { MovieFilters } from './MovieFilters';
 import { MoodCarousel } from './MoodCarousel';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import {useMovies} from "../hooks/useMovies";
+import { useMovies } from "../hooks/useMovies";
 
 
 export function MovieCatalog() {
@@ -29,9 +29,9 @@ export function MovieCatalog() {
   useEffect(() => {
     const handleScroll = () => {
       if (
-          window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 &&
-          !loading &&
-          hasMore
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 &&
+        !loading &&
+        hasMore
       ) {
         loadMore();
       }
@@ -107,7 +107,7 @@ export function MovieCatalog() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {movies.map((movie) => (
-                  // @ts-ignore
+                // @ts-ignore
                 <MovieCard key={movie.id} movie={movie} />
               ))}
             </div>
